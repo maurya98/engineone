@@ -1,0 +1,57 @@
+.profile-page h1 {
+  margin: 0 0 1rem;
+}
+
+.profile-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  max-width: 400px;
+}
+
+.profile-section h2 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.profile-section label {
+  display: block;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.profile-section input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.profile-section input:disabled {
+  opacity: 0.7;
+}
+
+.profile-section button {
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.form-error {
+  background: rgba(248, 81, 73, 0.15);
+  color: #f85149;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}

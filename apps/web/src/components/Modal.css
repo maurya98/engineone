@@ -1,0 +1,92 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+}
+
+.modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  min-width: 320px;
+  max-width: 90vw;
+  z-index: 1001;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.modal-title {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.modal-form label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.modal-form input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.modal-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal-error {
+  color: #f85149;
+  font-size: 0.875rem;
+  margin: -0.5rem 0 0.75rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.modal-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.modal-btn.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.modal-btn.secondary:hover {
+  background: var(--bg);
+}
+
+.modal-btn.primary {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+}
+
+.modal-btn.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.modal-btn.primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

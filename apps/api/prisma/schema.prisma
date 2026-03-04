@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String    @unique @db.VarChar(255)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  role         String    @default("user") @db.VarChar(50)
+  samlId       String?   @map("saml_id") @db.VarChar(255)
+  displayName  String?   @map("display_name") @db.VarChar(255)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  preferences       UserPreferences?
+  workspacesCreated Workspace[]         @relation("WorkspaceCreatedBy")
+  workspaceMembers  WorkspaceMember[]
+  repoMembers       RepoMember[]
+  commits           Commit[]            @relation("CommitAuthor")
+  mergeRequests     MergeRequest[]      @relation("MergeRequestAuthor")
+  mergeRequestWatchers MergeRequestWatcher[]
+  issues            Issue[]             @relation("IssueCreatedBy")
+  tagsCreated       Tag[]               @relation("TagCreatedBy")
+
+  @@index([email])
+  @@index([samlId])
+}
+
+model UserPreferences {
+  userId    String   @id @map("user_id") @db.Uuid
+  theme     String   @default("system") @db.VarChar(50)
+  fontSize  String   @default("medium") @map("font_size") @db.VarChar(50)
+  fontStyle String   @default("default") @map("font_style") @db.VarChar(100)
+  iconPack  String   @default("default") @map("icon_pack") @db.VarChar(100)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Workspace {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(255)
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  creator  User              @relation("WorkspaceCreatedBy", fields: [createdBy], references: [id])
+  members  WorkspaceMember[]
+  repos    Repository[]
+  apiKeys  ApiKey[]
+
+  @@index([createdBy])
+}
+
+model WorkspaceMember {
+  workspaceId String   @map("workspace_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  role        String   @default("member") @db.VarChar(50)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+}
+
+model Repository {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId        String   @map("workspace_id") @db.Uuid
+  name               String   @db.VarChar(255)
+  defaultBranchName  String   @default("main") @map("default_branch_name") @db.VarChar(255)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members         RepoMember[]
+  branches        Branch[]
+  commits         Commit[]
+  tags            Tag[]
+  webhooks        RepoWebhook[]
+  mergeRequests   MergeRequest[]
+  issues          Issue[]
+  wikiPages       WikiPage[]
+  apiKeys         ApiKey[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+}
+
+model RepoMember {
+  repoId   String   @map("repo_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  role     String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  repo Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([repoId, userId])
+  @@index([userId])
+}
+
+model Commit {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  repoId         String   @map("repo_id") @db.Uuid
+  authorId       String   @map("author_id") @db.Uuid
+  parentCommitId String?  @map("parent_commit_id") @db.Uuid
+  message        String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  repo         Repository   @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  author       User         @relation("CommitAuthor", fields: [authorId], references: [id])
+  parentCommit Commit?      @relation("CommitParent", fields: [parentCommitId], references: [id])
+  childCommits Commit[]     @relation("CommitParent")
+  treeEntries  CommitTree[]
+  branches     Branch[]     @relation("BranchHead")
+  tags         Tag[]
+  mergeRequests MergeRequest[] @relation("MergeRequestMergeCommit")
+}
+
+model CommitTree {
+  commitId String @map("commit_id") @db.Uuid
+  path     String @db.VarChar(1024)
+  blobId   String @map("blob_id") @db.VarChar(255)
+  kind     String @db.VarChar(20)
+
+  commit Commit @relation(fields: [commitId], references: [id], onDelete: Cascade)
+
+  @@id([commitId, path])
+  @@index([commitId])
+}
+
+model Branch {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  repoId        String   @map("repo_id") @db.Uuid
+  name          String   @db.VarChar(255)
+  headCommitId  String?  @map("head_commit_id") @db.Uuid
+  isProtected   Boolean  @default(false) @map("is_protected")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  repo              Repository        @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  headCommit        Commit?           @relation("BranchHead", fields: [headCommitId], references: [id])
+  mergeRequestsSrc  MergeRequest[]    @relation("MergeRequestSource")
+  mergeRequestsTgt  MergeRequest[]     @relation("MergeRequestTarget")
+  issues            Issue[]
+}
+
+model Tag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  repoId    String   @map("repo_id") @db.Uuid
+  name      String   @db.VarChar(255)
+  commitId  String   @map("commit_id") @db.Uuid
+  createdBy String?  @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  repo    Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  commit  Commit     @relation(fields: [commitId], references: [id], onDelete: Cascade)
+  creator User?      @relation("TagCreatedBy", fields: [createdBy], references: [id])
+
+  @@unique([repoId, name])
+  @@index([repoId])
+}
+
+model RepoWebhook {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  repoId    String   @map("repo_id") @db.Uuid
+  url       String   @db.VarChar(2048)
+  events    String   @default("push") @db.VarChar(255)
+  secret    String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  repo Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@index([repoId])
+}
+
+model MergeRequest {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  repoId           String   @map("repo_id") @db.Uuid
+  sourceBranchId   String   @map("source_branch_id") @db.Uuid
+  targetBranchId   String   @map("target_branch_id") @db.Uuid
+  title            String   @db.VarChar(500)
+  description      String?  @db.Text
+  status           String   @default("open") @db.VarChar(50)
+  authorId         String   @map("author_id") @db.Uuid
+  mergeCommitId    String?  @map("merge_commit_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  repo           Repository   @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  sourceBranch   Branch       @relation("MergeRequestSource", fields: [sourceBranchId], references: [id], onDelete: Cascade)
+  targetBranch   Branch       @relation("MergeRequestTarget", fields: [targetBranchId], references: [id], onDelete: Cascade)
+  author         User         @relation("MergeRequestAuthor", fields: [authorId], references: [id])
+  mergeCommit    Commit?      @relation("MergeRequestMergeCommit", fields: [mergeCommitId], references: [id])
+  watchers       MergeRequestWatcher[]
+
+  @@index([repoId])
+}
+
+model MergeRequestWatcher {
+  mergeRequestId String   @map("merge_request_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  mergeRequest MergeRequest @relation(fields: [mergeRequestId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([mergeRequestId, userId])
+}
+
+model Issue {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  repoId      String   @map("repo_id") @db.Uuid
+  branchId    String   @map("branch_id") @db.Uuid
+  title       String   @db.VarChar(500)
+  description String?  @db.Text
+  status      String   @default("open") @db.VarChar(50)
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  repo   Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  branch Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  author User       @relation("IssueCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([repoId])
+  @@index([branchId])
+}
+
+model WikiPage {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  repoId    String   @map("repo_id") @db.Uuid
+  slug      String   @db.VarChar(255)
+  title     String   @db.VarChar(500)
+  body      String?  @db.Text
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  repo Repository @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@unique([repoId, slug])
+  @@index([repoId])
+}
+
+model ApiKey {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  repoId       String?  @map("repo_id") @db.Uuid
+  workspaceId  String?  @map("workspace_id") @db.Uuid
+  keyHash      String   @map("key_hash") @db.VarChar(255)
+  name         String?  @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  repo       Repository? @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  workspace  Workspace?  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([repoId])
+  @@index([workspaceId])
+}
