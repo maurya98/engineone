@@ -44,6 +44,7 @@ export const GraphNodes: React.FC<GraphComponentsProps> = React.memo(({ classNam
             .with(NodeKind.Function, () => false)
             .with(NodeKind.DecisionTable, () => false)
             .with(NodeKind.Expression, () => false)
+            .with(NodeKind.Decision, () => false)
             .otherwise(() => true),
           position: node.position,
           icon: specification?.icon,
@@ -104,6 +105,10 @@ export const GraphNodes: React.FC<GraphComponentsProps> = React.memo(({ classNam
       {
         title: 'Decision Tables',
         nodes: filtered.filter((node) => node.type === NodeKind.DecisionTable),
+      },
+      {
+        title: 'Decisions',
+        nodes: filtered.filter((node) => node.type === NodeKind.Decision),
       },
       {
         title: 'Expressions',

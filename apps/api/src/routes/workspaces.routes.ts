@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth, requireSuperAdmin, requireWorkspaceAdmin } from '../middleware/auth.middleware.js';
 import * as workspaceService from '../services/workspace.service.js';
 import * as repoService from '../services/repo.service.js';
+import { param } from '../utils/param.js';
 
 export const workspacesRouter = Router();
 
@@ -33,7 +34,8 @@ workspacesRouter.post('/', requireSuperAdmin, async (req: Request, res: Response
 });
 
 workspacesRouter.get('/:workspaceId', async (req: Request, res: Response) => {
-  const ws = await workspaceService.getWorkspaceById(req.params.workspaceId);
+  const workspaceId = param(req, 'workspaceId');
+  const ws = await workspaceService.getWorkspaceById(workspaceId);
   if (!ws) {
     res.status(404).json({ error: 'Workspace not found' });
     return;
@@ -53,7 +55,8 @@ workspacesRouter.patch('/:workspaceId', requireWorkspaceAdmin, async (req: Reque
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const ws = await workspaceService.updateWorkspace(req.params.workspaceId, parsed.data);
+  const workspaceId = param(req, 'workspaceId');
+  const ws = await workspaceService.updateWorkspace(workspaceId, parsed.data);
   if (!ws) {
     res.status(404).json({ error: 'Workspace not found' });
     return;
@@ -62,7 +65,8 @@ workspacesRouter.patch('/:workspaceId', requireWorkspaceAdmin, async (req: Reque
 });
 
 workspacesRouter.delete('/:workspaceId', requireSuperAdmin, async (req: Request, res: Response) => {
-  const ok = await workspaceService.deleteWorkspace(req.params.workspaceId);
+  const workspaceId = param(req, 'workspaceId');
+  const ok = await workspaceService.deleteWorkspace(workspaceId);
   if (!ok) {
     res.status(404).json({ error: 'Workspace not found' });
     return;
@@ -71,7 +75,8 @@ workspacesRouter.delete('/:workspaceId', requireSuperAdmin, async (req: Request,
 });
 
 workspacesRouter.get('/:workspaceId/repos', async (req: Request, res: Response) => {
-  const ws = await workspaceService.getWorkspaceById(req.params.workspaceId);
+  const workspaceId = param(req, 'workspaceId');
+  const ws = await workspaceService.getWorkspaceById(workspaceId);
   if (!ws) {
     res.status(404).json({ error: 'Workspace not found' });
     return;
@@ -92,7 +97,8 @@ workspacesRouter.post('/:workspaceId/repos', requireWorkspaceAdmin, async (req: 
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const ws = await workspaceService.getWorkspaceById(req.params.workspaceId);
+  const workspaceId = param(req, 'workspaceId');
+  const ws = await workspaceService.getWorkspaceById(workspaceId);
   if (!ws) {
     res.status(404).json({ error: 'Workspace not found' });
     return;

@@ -257,6 +257,101 @@
   min-width: 720px;
 }
 
+/* Tabs for JSON file: Visual (JDM) vs Raw JSON */
+.code-json-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.code-json-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+}
+
+.code-json-tab:hover {
+  color: var(--text);
+}
+
+.code-json-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Raw JSON editor (textarea) */
+.code-raw-json-wrap {
+  flex: 1;
+  min-height: 400px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.code-raw-json-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.btn-format-json {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.btn-format-json:hover {
+  border-color: var(--text-muted);
+  background: var(--bg);
+}
+
+.code-raw-json-error {
+  flex-shrink: 0;
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--danger, #cf222e);
+}
+
+.code-raw-json-editor {
+  flex: 1;
+  min-height: 400px;
+  width: 100%;
+  padding: 1rem;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: none;
+  outline: none;
+}
+
+.code-raw-json-editor:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+}
+
+.code-raw-json-editor::placeholder {
+  color: var(--text-muted);
+}
+
 /* JDM Editor (ReactFlow) needs a definite height for the graph canvas and nodes to show.
    See packages/jdm-editor dg.scss: .grl-dg uses height: 100% and grid layout. */
 .code-jdm-editor-wrap {

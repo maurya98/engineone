@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth, requireRepoRole } from '../middleware/auth.middleware.js';
 import { prisma } from '../db/prisma.js';
 import * as vcsService from '../services/vcs.service.js';
+import { param } from '../utils/param.js';
 
 export const issuesRouter = Router({ mergeParams: true });
 
@@ -22,7 +23,7 @@ issuesRouter.use(requireAuth);
 issuesRouter.use(requireRepoRole('qa'));
 
 issuesRouter.get('/', async (req: Request, res: Response) => {
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const branch = req.query.branch as string | undefined;
   const status = req.query.status as string | undefined;
   const where: { repoId: string; branchId?: string; status?: string } = { repoId };
@@ -41,7 +42,7 @@ issuesRouter.get('/', async (req: Request, res: Response) => {
       id: i.id,
       repo_id: i.repoId,
       branch_id: i.branchId,
-      branch_name: i.branch.name,
+      branch_name: (i as typeof i & { branch: { name: string } }).branch.name,
       title: i.title,
       description: i.description,
       status: i.status,
@@ -58,7 +59,7 @@ issuesRouter.post('/', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const userId = (req.user as { id: string }).id;
   const branch = await vcsService.getBranchByName(repoId, parsed.data.branch);
   if (!branch) {
@@ -90,8 +91,10 @@ issuesRouter.post('/', async (req: Request, res: Response) => {
 });
 
 issuesRouter.get('/:issueId', async (req: Request, res: Response) => {
+  const issueId = param(req, 'issueId');
+  const repoId = param(req, 'id');
   const issue = await prisma.issue.findFirst({
-    where: { id: req.params.issueId, repoId: req.params.id },
+    where: { id: issueId, repoId },
     include: { branch: { select: { name: true } } },
   });
   if (!issue) {
@@ -103,7 +106,7 @@ issuesRouter.get('/:issueId', async (req: Request, res: Response) => {
       id: issue.id,
       repo_id: issue.repoId,
       branch_id: issue.branchId,
-      branch_name: issue.branch.name,
+      branch_name: (issue as typeof issue & { branch: { name: string } }).branch.name,
       title: issue.title,
       description: issue.description,
       status: issue.status,
@@ -120,8 +123,10 @@ issuesRouter.patch('/:issueId', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
+  const issueId = param(req, 'issueId');
+  const repoId = param(req, 'id');
   const issue = await prisma.issue.updateMany({
-    where: { id: req.params.issueId, repoId: req.params.id },
+    where: { id: issueId, repoId },
     data: {
       ...(parsed.data.title != null && { title: parsed.data.title }),
       ...(parsed.data.description != null && { description: parsed.data.description }),
@@ -133,7 +138,7 @@ issuesRouter.patch('/:issueId', async (req: Request, res: Response) => {
     return;
   }
   const updated = await prisma.issue.findFirst({
-    where: { id: req.params.issueId, repoId: req.params.id },
+    where: { id: issueId, repoId },
   });
   if (!updated) {
     res.status(500).json({ error: 'Update succeeded but issue not found' });

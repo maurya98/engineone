@@ -8,6 +8,7 @@ import { mergeRequestsRouter } from './merge-requests.routes.js';
 import { issuesRouter } from './issues.routes.js';
 import { wikiRouter } from './wiki.routes.js';
 import { prisma } from '../db/prisma.js';
+import { param } from '../utils/param.js';
 
 export const reposRouter = Router();
 
@@ -30,7 +31,7 @@ reposRouter.get('/:id', requireRepoRole('qa'), async (req: Request, res: Respons
 
 reposRouter.get('/:id/tree', requireRepoRole('qa'), async (req: Request, res: Response) => {
   const branch = (req.query.branch as string) || (req as any).repo?.default_branch_name || 'main';
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const entries = await treeService.getTreeForBranch(repoId, branch);
   if (entries === null) {
     res.status(404).json({ error: 'Branch not found' });
@@ -46,7 +47,7 @@ reposRouter.get('/:id/files', requireRepoRole('qa'), async (req: Request, res: R
     return;
   }
   const branch = (req.query.branch as string) || (req as any).repo?.default_branch_name || 'main';
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const content = await treeService.getFileContent(repoId, branch, path);
   if (content === null) {
     res.status(404).json({ error: 'File not found' });
@@ -67,7 +68,7 @@ reposRouter.patch('/:id', requireRepoRole('maintainer'), async (req: Request, re
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const updated = await repoService.updateRepository(req.params.id, parsed.data);
+  const updated = await repoService.updateRepository(param(req, 'id'), parsed.data);
   if (!updated) {
     res.status(404).json({ error: 'Repository not found' });
     return;
@@ -76,7 +77,7 @@ reposRouter.patch('/:id', requireRepoRole('maintainer'), async (req: Request, re
 });
 
 reposRouter.delete('/:id', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
-  const ok = await repoService.deleteRepository(req.params.id);
+  const ok = await repoService.deleteRepository(param(req, 'id'));
   if (!ok) {
     res.status(404).json({ error: 'Repository not found' });
     return;
@@ -85,15 +86,16 @@ reposRouter.delete('/:id', requireRepoRole('maintainer'), async (req: Request, r
 });
 
 reposRouter.get('/:id/members', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
+  const repoId = param(req, 'id');
   const members = await prisma.repoMember.findMany({
-    where: { repoId: req.params.id },
+    where: { repoId },
     include: { user: { select: { email: true } } },
   });
   res.json({
-    members: members.map((m: { userId: string; role: string; user: { email: string } }) => ({
+    members: members.map((m) => ({
       user_id: m.userId,
       role: m.role,
-      email: m.user.email,
+      email: (m as typeof m & { user: { email: string } }).user.email,
     })),
   });
 });
@@ -104,12 +106,12 @@ reposRouter.post('/:id/members', requireRepoRole('maintainer'), async (req: Requ
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  await repoService.addRepoMember(req.params.id, parsed.data.user_id, parsed.data.role);
+  await repoService.addRepoMember(param(req, 'id'), parsed.data.user_id, parsed.data.role);
   res.status(201).json({ ok: true });
 });
 
 reposRouter.delete('/:id/members/:userId', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
-  const ok = await repoService.removeRepoMember(req.params.id, req.params.userId);
+  const ok = await repoService.removeRepoMember(param(req, 'id'), param(req, 'userId'));
   if (!ok) {
     res.status(404).json({ error: 'Member not found' });
     return;

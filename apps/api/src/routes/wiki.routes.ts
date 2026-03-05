@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, requireRepoRole } from '../middleware/auth.middleware.js';
 import { prisma } from '../db/prisma.js';
+import { param } from '../utils/param.js';
 
 export const wikiRouter = Router({ mergeParams: true });
 
@@ -20,8 +21,9 @@ wikiRouter.use(requireAuth);
 wikiRouter.use(requireRepoRole('qa'));
 
 wikiRouter.get('/', async (req: Request, res: Response) => {
+  const repoId = param(req, 'id');
   const pages = await prisma.wikiPage.findMany({
-    where: { repoId: req.params.id },
+    where: { repoId },
     orderBy: { title: 'asc' },
     select: { id: true, slug: true, title: true, updatedAt: true },
   });
@@ -31,8 +33,10 @@ wikiRouter.get('/', async (req: Request, res: Response) => {
 });
 
 wikiRouter.get('/:slug', async (req: Request, res: Response) => {
+  const repoId = param(req, 'id');
+  const slug = param(req, 'slug');
   const page = await prisma.wikiPage.findUnique({
-    where: { repoId_slug: { repoId: req.params.id, slug: req.params.slug } },
+    where: { repoId_slug: { repoId, slug } },
   });
   if (!page) {
     res.status(404).json({ error: 'Page not found' });
@@ -49,10 +53,11 @@ wikiRouter.post('/', requireRepoRole('developer'), async (req: Request, res: Res
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
+  const repoId = param(req, 'id');
   const page = await prisma.wikiPage.upsert({
-    where: { repoId_slug: { repoId: req.params.id, slug: parsed.data.slug } },
+    where: { repoId_slug: { repoId, slug: parsed.data.slug } },
     create: {
-      repoId: req.params.id,
+      repoId,
       slug: parsed.data.slug,
       title: parsed.data.title,
       body: parsed.data.body ?? null,
@@ -70,8 +75,10 @@ wikiRouter.patch('/:slug', requireRepoRole('developer'), async (req: Request, re
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
+  const repoId = param(req, 'id');
+  const slug = param(req, 'slug');
   const page = await prisma.wikiPage.update({
-    where: { repoId_slug: { repoId: req.params.id, slug: req.params.slug } },
+    where: { repoId_slug: { repoId, slug } },
     data: {
       ...(parsed.data.title != null && { title: parsed.data.title }),
       ...(parsed.data.body != null && { body: parsed.data.body }),
@@ -84,8 +91,10 @@ wikiRouter.patch('/:slug', requireRepoRole('developer'), async (req: Request, re
 
 wikiRouter.delete('/:slug', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
   try {
+    const repoId = param(req, 'id');
+    const slug = param(req, 'slug');
     await prisma.wikiPage.delete({
-      where: { repoId_slug: { repoId: req.params.id, slug: req.params.slug } },
+      where: { repoId_slug: { repoId, slug } },
     });
   } catch {
     res.status(404).json({ error: 'Page not found' });

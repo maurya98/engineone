@@ -81,6 +81,9 @@ export type DecisionGraphStoreType = {
 
     nodeTypes: Record<string, Partial<Record<NodeTypeKind, VariableType>>>;
     globalType: Record<string, VariableType>;
+
+    /** Available decision keys (e.g. JSON file paths without .json) for decision node dropdown */
+    decisionKeys?: string[];
   };
 
   references: {
@@ -172,6 +175,7 @@ export const DecisionGraphProvider: React.FC<React.PropsWithChildren<DecisionGra
         compactMode: localStorage.getItem('jdm-compact-mode') === 'true',
         nodeTypes: {},
         globalType: {},
+        decisionKeys: [],
       })),
     [],
   );

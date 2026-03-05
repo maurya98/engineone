@@ -103,66 +103,12 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
   const [jsonEditorValue, setJsonEditorValue] = useState<DecisionGraphType | null>(null);
   const [jsonLoadError, setJsonLoadError] = useState<string | null>(null);
   const [jsonLoading, setJsonLoading] = useState(false);
+  const [jsonViewMode, setJsonViewMode] = useState<'jdm' | 'raw'>('jdm');
+  const [rawJsonText, setRawJsonText] = useState('');
+  const [rawJsonError, setRawJsonError] = useState<string | null>(null);
   const [simulate, setSimulate] = useState<Simulation | undefined>(undefined);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasRestoredRef = useRef<string | null>(null);
-
-  const simulatorPanels = useMemo(
-    () => [
-      {
-        id: 'simulator',
-        title: 'Simulator',
-        icon: <PlayCircleOutlined />,
-        hideHeader: true,
-        renderPanel: () => (
-          <GraphSimulator
-            defaultRequest={'{}\n'}
-            onClear={() => setSimulate(undefined)}
-            onRun={async ({ graph, context }) => {
-              try {
-                const res = await window.fetch('/simulate', {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ content: graph, context: context ?? {} }),
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                  const errData = (data as { data?: { nodeId?: string; type?: string; source?: string } }).data;
-                  setSimulate({
-                    error: {
-                      message: (data as { details?: string }).details ?? (data as { error?: string }).error,
-                      data: { nodeId: errData?.nodeId },
-                    },
-                    result: {
-                      trace: ((data as { data?: { trace?: Record<string, unknown> } }).data?.trace ?? {}) as SimulationOk['trace'],
-                      result: { error: (data as { details?: string }).details },
-                      performance: '',
-                      snapshot: graph,
-                    },
-                  });
-                  return;
-                }
-                setSimulate({ result: { ...data, snapshot: graph } as SimulationOk });
-              } catch (err) {
-                const message = err instanceof Error ? err.message : 'Simulation failed';
-                setSimulate({
-                  error: { message, data: { nodeId: undefined } },
-                  result: {
-                    trace: {} as SimulationOk['trace'],
-                    result: { error: message },
-                    performance: '',
-                    snapshot: graph,
-                  },
-                });
-              }
-            }}
-          />
-        ),
-      },
-    ],
-    []
-  );
 
   const { effectiveTheme } = useTheme();
   const jdmTheme = useMemo(() => {
@@ -223,29 +169,36 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
       setJsonEditorValue(null);
       setJsonLoadError(null);
       setJsonLoading(false);
+      setRawJsonText('');
+      setRawJsonError(null);
       return;
     }
     let cancelled = false;
     setJsonLoadError(null);
     setJsonLoading(true);
     (async () => {
+      let trimmed = '';
       try {
         const content = draft[selectedPath] !== undefined
           ? draft[selectedPath]
           : await getFileContent(selectedPath);
         if (cancelled) return;
-        const trimmed = (content ?? '').trim();
+        trimmed = (content ?? '').trim();
         if (!trimmed) {
           const emptyResult = decisionModelSchema.safeParse({ nodes: [], edges: [] });
           if (emptyResult.success) setJsonEditorValue(emptyResult.data);
           else setJsonEditorValue({ nodes: [], edges: [] });
+          setRawJsonText('{\n  "nodes": [],\n  "edges": []\n}');
+          setJsonViewMode('jdm');
           if (!cancelled) setJsonLoading(false);
           return;
         }
+        setRawJsonText(trimmed);
         const parsed: unknown = JSON.parse(trimmed);
         const result = decisionModelSchema.safeParse(parsed);
         if (result.success) {
           setJsonEditorValue(result.data);
+          setJsonViewMode('jdm');
         } else {
           setJsonLoadError(
             result.error.errors?.length
@@ -253,11 +206,14 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
               : 'Invalid JDM file. See https://docs.gorules.io/developers/jdm/jdm-editor'
           );
           setJsonEditorValue(null);
+          setJsonViewMode('raw');
         }
       } catch (e) {
         if (cancelled) return;
         setJsonLoadError(e instanceof Error ? e.message : 'Failed to load or parse JSON.');
         setJsonEditorValue(null);
+        setRawJsonText(trimmed || '');
+        setJsonViewMode('raw');
       } finally {
         if (!cancelled) setJsonLoading(false);
       }
@@ -313,6 +269,14 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
 
   const treeData = buildTree(mergedPaths);
 
+  const decisionKeys = useMemo(
+    () =>
+      mergedPaths
+        .filter((p) => p.kind === 'file' && p.path.toLowerCase().endsWith('.json'))
+        .map((p) => p.path.replace(/\.json$/i, '')),
+    [mergedPaths]
+  );
+
   const getFileContent = useCallback(
     async (path: string): Promise<string> => {
       if (draft[path] !== undefined) return draft[path];
@@ -326,9 +290,140 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
     [repoId, branch, draft]
   );
 
+  const simulatorPanels = useMemo(
+    () => [
+      {
+        id: 'simulator',
+        title: 'Simulator',
+        icon: <PlayCircleOutlined />,
+        hideHeader: true,
+        renderPanel: () => (
+          <GraphSimulator
+            defaultRequest={'{}\n'}
+            onClear={() => setSimulate(undefined)}
+            onRun={async ({ graph, context }) => {
+              try {
+                const nodes = (graph as { nodes?: Array<{ type?: string; content?: { key?: string } }> })?.nodes ?? [];
+                const refKeys = [...new Set(nodes.filter((n) => n.type === 'decisionNode' && n.content?.key).map((n) => n.content!.key!))];
+                const decisions: Record<string, unknown> = {};
+                for (const key of refKeys) {
+                  const path = `${key}.json`;
+                  let raw: string | undefined = draft[path];
+                  if (raw === undefined) raw = await getFileContent(path);
+                  try {
+                    if (raw?.trim()) decisions[key] = JSON.parse(raw) as unknown;
+                  } catch {
+                    /* skip invalid JSON */
+                  }
+                }
+                const res = await window.fetch('/simulate', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ content: graph, context: context ?? {}, decisions }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  const errData = (data as { data?: { nodeId?: string; type?: string; source?: string } }).data;
+                  setSimulate({
+                    error: {
+                      message: (data as { details?: string }).details ?? (data as { error?: string }).error,
+                      data: { nodeId: errData?.nodeId },
+                    },
+                    result: {
+                      trace: ((data as { data?: { trace?: Record<string, unknown> } }).data?.trace ?? {}) as SimulationOk['trace'],
+                      result: { error: (data as { details?: string }).details },
+                      performance: '',
+                      snapshot: graph,
+                    },
+                  });
+                  return;
+                }
+                setSimulate({ result: { ...data, snapshot: graph } as SimulationOk });
+              } catch (err) {
+                const message = err instanceof Error ? err.message : 'Simulation failed';
+                setSimulate({
+                  error: { message, data: { nodeId: undefined } },
+                  result: {
+                    trace: {} as SimulationOk['trace'],
+                    result: { error: message },
+                    performance: '',
+                    snapshot: graph,
+                  },
+                });
+              }
+            }}
+          />
+        ),
+      },
+    ],
+    [draft, getFileContent]
+  );
+
   const handleSelectFile = (path: string) => {
     setSelectedPath(path);
   };
+
+  const switchToVisualAndParse = useCallback(() => {
+    setJsonViewMode('jdm');
+    const trimmed = rawJsonText.trim();
+    if (!trimmed) {
+      const emptyResult = decisionModelSchema.safeParse({ nodes: [], edges: [] });
+      if (emptyResult.success) setJsonEditorValue(emptyResult.data);
+      else setJsonEditorValue({ nodes: [], edges: [] });
+      setJsonLoadError(null);
+      return;
+    }
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      const result = decisionModelSchema.safeParse(parsed);
+      if (result.success) {
+        setJsonEditorValue(result.data);
+        setJsonLoadError(null);
+        if (selectedPath) {
+          setDraft((prev) => ({ ...prev, [selectedPath]: trimmed }));
+        }
+      } else {
+        setJsonEditorValue(null);
+        setJsonLoadError(
+          result.error.errors?.length
+            ? result.error.errors.map((e) => e.message).join('; ')
+            : 'Invalid JDM file.'
+        );
+      }
+    } catch {
+      setJsonEditorValue(null);
+      setJsonLoadError('Invalid JSON.');
+    }
+  }, [rawJsonText, selectedPath]);
+
+  const validateRawJson = useCallback(() => {
+    const trimmed = rawJsonText.trim();
+    if (!trimmed) {
+      setRawJsonError(null);
+      return;
+    }
+    try {
+      JSON.parse(trimmed);
+      setRawJsonError(null);
+    } catch (e) {
+      setRawJsonError(e instanceof Error ? e.message : 'Invalid JSON');
+    }
+  }, [rawJsonText]);
+
+  const handleFormatJson = useCallback(() => {
+    try {
+      const parsed = JSON.parse(rawJsonText.trim());
+      const formatted = JSON.stringify(parsed, null, 2);
+      setRawJsonText(formatted);
+      setRawJsonError(null);
+      if (selectedPath) {
+        setDraft((prev) => ({ ...prev, [selectedPath]: formatted }));
+      }
+    } catch (e) {
+      setRawJsonError(e instanceof Error ? e.message : 'Invalid JSON');
+    }
+  }, [rawJsonText, selectedPath]);
 
   const toggleFolder = (path: string) => {
     setExpandedFolders((prev) => {
@@ -651,36 +746,94 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
             </ul>
           )}
         </div>
-        <div className={`code-main${!jsonLoading && jsonEditorValue != null && selectedPath?.toLowerCase().endsWith('.json') ? ' code-main--jdm' : ''}`}>
+        <div className={`code-main${!jsonLoading && jsonViewMode === 'jdm' && jsonEditorValue != null && selectedPath?.toLowerCase().endsWith('.json') ? ' code-main--jdm' : ''}`}>
           {selectedPath ? (
             selectedPath.toLowerCase().endsWith('.json') ? (
               <>
                 {jsonLoading && <p className="muted">Loading…</p>}
-                {!jsonLoading && jsonLoadError && (
+                {!jsonLoading && jsonLoadError && jsonViewMode === 'jdm' && (
                   <p className="muted" role="alert">{jsonLoadError}</p>
                 )}
-                {!jsonLoading && jsonEditorValue != null && (
-                  <div className="code-jdm-editor-wrap">
-                    <div className="code-jdm-editor-inner">
-                      <JdmConfigProvider theme={jdmTheme}>
-                        <DecisionGraph
-                          value={jsonEditorValue}
-                          onChange={(next) => {
-                            setJsonEditorValue(next);
-                            setDraft((prev) => ({
-                              ...prev,
-                              [selectedPath]: JSON.stringify(next, null, 2),
-                            }));
-                          }}
-                          simulate={simulate}
-                          panels={simulatorPanels}
-                        />
-                      </JdmConfigProvider>
+                {!jsonLoading && (
+                  <>
+                    <div className="code-json-tabs">
+                      <button
+                        type="button"
+                        className={`code-json-tab ${jsonViewMode === 'jdm' ? 'active' : ''}`}
+                        onClick={switchToVisualAndParse}
+                      >
+                        Visual
+                      </button>
+                      <button
+                        type="button"
+                        className={`code-json-tab ${jsonViewMode === 'raw' ? 'active' : ''}`}
+                        onClick={() => setJsonViewMode('raw')}
+                      >
+                        Raw JSON
+                      </button>
                     </div>
-                  </div>
-                )}
-                {!jsonLoading && !jsonLoadError && jsonEditorValue == null && (
-                  <p className="muted">Not a valid JDM file.</p>
+                    {jsonViewMode === 'raw' && (
+                      <div className="code-raw-json-wrap">
+                        <div className="code-raw-json-toolbar">
+                          <button
+                            type="button"
+                            className="btn-format-json"
+                            onClick={handleFormatJson}
+                            title="Format JSON"
+                          >
+                            Format
+                          </button>
+                        </div>
+                        <textarea
+                          className="code-raw-json-editor"
+                          value={draft[selectedPath] ?? rawJsonText}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setRawJsonText(v);
+                            setRawJsonError(null);
+                            if (selectedPath) {
+                              setDraft((prev) => ({ ...prev, [selectedPath]: v }));
+                            }
+                          }}
+                          onBlur={validateRawJson}
+                          spellCheck={false}
+                          placeholder='{"nodes": [], "edges": []}'
+                          aria-label="Raw JSON editor"
+                        />
+                        {rawJsonError && (
+                          <p className="code-raw-json-error" role="alert">
+                            {rawJsonError}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {jsonViewMode === 'jdm' && jsonEditorValue != null && (
+                      <div className="code-jdm-editor-wrap">
+                        <div className="code-jdm-editor-inner">
+                          <JdmConfigProvider theme={jdmTheme}>
+                            <DecisionGraph
+                              value={jsonEditorValue}
+                              onChange={(next) => {
+                                setJsonEditorValue(next);
+                                const str = JSON.stringify(next, null, 2);
+                                setRawJsonText(str);
+                                setDraft((prev) => ({
+                                  ...prev,
+                                  [selectedPath]: str,
+                                }));
+                              }}
+                              simulate={simulate}
+                              panels={simulatorPanels}
+                              decisionKeys={decisionKeys}
+                            />
+                          </JdmConfigProvider>
+                        </div>
+                      </div>
+                    )}
+                    {jsonViewMode === 'jdm' && !jsonLoadError && jsonEditorValue == null && (
+                      <p className="muted">Not a valid JDM file. Switch to Raw JSON to edit.</p>
+                    )}
+                  </>
                 )}
               </>
             ) : (

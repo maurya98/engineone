@@ -4,6 +4,7 @@ import { requireAuth, requireRepoRole } from '../middleware/auth.middleware.js';
 import * as vcsService from '../services/vcs.service.js';
 import * as blobService from '../services/blob.service.js';
 import { prisma } from '../db/prisma.js';
+import { param } from '../utils/param.js';
 
 export const vcsRouter = Router({ mergeParams: true });
 
@@ -35,7 +36,7 @@ vcsRouter.use(requireAuth);
 vcsRouter.use(requireRepoRole('developer'));
 
 vcsRouter.get('/commits', async (req: Request, res: Response) => {
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const branch = (req.query.branch as string) || 'main';
   const limit = Math.min(Number(req.query.limit) || 50, 100);
   const commits = await vcsService.listCommits(repoId, { branch, limit });
@@ -43,7 +44,7 @@ vcsRouter.get('/commits', async (req: Request, res: Response) => {
 });
 
 vcsRouter.get('/commits/graph', async (req: Request, res: Response) => {
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const branch = (req.query.branch as string) || 'main';
   const limit = Math.min(Number(req.query.limit) || 50, 100);
   const commits = await vcsService.listCommits(repoId, { branch, limit });
@@ -63,7 +64,7 @@ vcsRouter.post('/commits', requireRepoRole('maintainer'), async (req: Request, r
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const repo = (req as any).repo;
   const userId = (req.user as { id: string }).id;
   const { message, branch: branchName, tree } = parsed.data;
@@ -120,7 +121,7 @@ vcsRouter.post('/commits', requireRepoRole('maintainer'), async (req: Request, r
 });
 
 vcsRouter.get('/branches', async (req: Request, res: Response) => {
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const branches = await vcsService.listBranches(repoId);
   const defaultBranch = (req as any).repo?.default_branch_name || 'main';
   res.json({
@@ -137,7 +138,7 @@ vcsRouter.post('/branches', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const sourceBranch = await vcsService.getBranchByName(repoId, parsed.data.source);
   if (!sourceBranch) {
     res.status(404).json({ error: 'Source branch not found' });
@@ -158,8 +159,8 @@ vcsRouter.post('/branches', async (req: Request, res: Response) => {
 });
 
 vcsRouter.delete('/branches/:name', async (req: Request, res: Response) => {
-  const repoId = req.params.id;
-  const name = req.params.name;
+  const repoId = param(req, 'id');
+  const name = param(req, 'name');
   const repo = (req as any).repo;
   if (name === (repo?.default_branch_name || 'main')) {
     res.status(400).json({ error: 'Cannot delete default branch' });
@@ -175,8 +176,8 @@ vcsRouter.delete('/branches/:name', async (req: Request, res: Response) => {
 });
 
 vcsRouter.patch('/branches/:name', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
-  const repoId = req.params.id;
-  const name = req.params.name;
+  const repoId = param(req, 'id');
+  const name = param(req, 'name');
   const isProtected = req.body.is_protected === true;
   const branch = await vcsService.getBranchByName(repoId, name);
   if (!branch) {
@@ -196,8 +197,8 @@ vcsRouter.post('/branches/:name/reset', requireRepoRole('maintainer'), async (re
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const repoId = req.params.id;
-  const name = req.params.name;
+  const repoId = param(req, 'id');
+  const name = param(req, 'name');
   const branch = await vcsService.getBranchByName(repoId, name);
   if (!branch) {
     res.status(404).json({ error: 'Branch not found' });
@@ -219,7 +220,7 @@ vcsRouter.get('/compare', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Missing head param' });
     return;
   }
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const baseCommitId = await vcsService.resolveToCommitId(repoId, base);
   const headCommitId = await vcsService.resolveToCommitId(repoId, head);
   if (!baseCommitId || !headCommitId) {
@@ -255,7 +256,7 @@ vcsRouter.get('/compare', async (req: Request, res: Response) => {
 });
 
 vcsRouter.get('/tags', async (req: Request, res: Response) => {
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const tags = await prisma.tag.findMany({
     where: { repoId },
     orderBy: { name: 'asc' },
@@ -272,7 +273,7 @@ vcsRouter.post('/tags', requireRepoRole('maintainer'), async (req: Request, res:
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const userId = (req.user as { id: string }).id;
   let commitId: string | null | undefined = parsed.data.commit_id;
   if (!commitId) {
@@ -299,8 +300,8 @@ vcsRouter.post('/tags', requireRepoRole('maintainer'), async (req: Request, res:
 });
 
 vcsRouter.delete('/tags/:name', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
-  const repoId = req.params.id;
-  const name = req.params.name;
+  const repoId = param(req, 'id');
+  const name = param(req, 'name');
   const res_ = await prisma.tag.deleteMany({
     where: { repoId, name },
   });

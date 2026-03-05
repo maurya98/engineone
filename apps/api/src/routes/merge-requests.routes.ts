@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth, requireRepoRole } from '../middleware/auth.middleware.js';
 import { prisma } from '../db/prisma.js';
 import * as vcsService from '../services/vcs.service.js';
+import { param } from '../utils/param.js';
 
 export const mergeRequestsRouter = Router({ mergeParams: true });
 
@@ -23,7 +24,7 @@ mergeRequestsRouter.use(requireAuth);
 mergeRequestsRouter.use(requireRepoRole('developer'));
 
 mergeRequestsRouter.get('/', async (req: Request, res: Response) => {
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const status = req.query.status as string | undefined;
   const list = await prisma.mergeRequest.findMany({
     where: { repoId, ...(status && { status }) },
@@ -34,21 +35,24 @@ mergeRequestsRouter.get('/', async (req: Request, res: Response) => {
     },
   });
   res.json({
-    merge_requests: list.map((mr) => ({
-      id: mr.id,
-      repo_id: mr.repoId,
-      source_branch_id: mr.sourceBranchId,
-      target_branch_id: mr.targetBranchId,
-      source_branch_name: mr.sourceBranch.name,
-      target_branch_name: mr.targetBranch.name,
-      title: mr.title,
-      description: mr.description,
-      status: mr.status,
-      author_id: mr.authorId,
-      merge_commit_id: mr.mergeCommitId,
-      created_at: mr.createdAt,
-      updated_at: mr.updatedAt,
-    })),
+    merge_requests: list.map((mr) => {
+      const withBranches = mr as typeof mr & { sourceBranch: { name: string }; targetBranch: { name: string } };
+      return {
+        id: mr.id,
+        repo_id: mr.repoId,
+        source_branch_id: mr.sourceBranchId,
+        target_branch_id: mr.targetBranchId,
+        source_branch_name: withBranches.sourceBranch.name,
+        target_branch_name: withBranches.targetBranch.name,
+        title: mr.title,
+        description: mr.description,
+        status: mr.status,
+        author_id: mr.authorId,
+        merge_commit_id: mr.mergeCommitId,
+        created_at: mr.createdAt,
+        updated_at: mr.updatedAt,
+      };
+    }),
   });
 });
 
@@ -58,7 +62,7 @@ mergeRequestsRouter.post('/', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
-  const repoId = req.params.id;
+  const repoId = param(req, 'id');
   const userId = (req.user as { id: string }).id;
   const sourceBranch = await vcsService.getBranchByName(repoId, parsed.data.source_branch);
   const targetBranch = await vcsService.getBranchByName(repoId, parsed.data.target_branch);
@@ -94,8 +98,10 @@ mergeRequestsRouter.post('/', async (req: Request, res: Response) => {
 });
 
 mergeRequestsRouter.get('/:mrId', async (req: Request, res: Response) => {
+  const mrId = param(req, 'mrId');
+  const repoId = param(req, 'id');
   const mr = await prisma.mergeRequest.findFirst({
-    where: { id: req.params.mrId, repoId: req.params.id },
+    where: { id: mrId, repoId },
     include: {
       sourceBranch: { select: { name: true } },
       targetBranch: { select: { name: true } },
@@ -106,17 +112,18 @@ mergeRequestsRouter.get('/:mrId', async (req: Request, res: Response) => {
     return;
   }
   const watchers = await prisma.mergeRequestWatcher.findMany({
-    where: { mergeRequestId: req.params.mrId },
+    where: { mergeRequestId: mrId },
     select: { userId: true },
   });
+  const withBranches = mr as typeof mr & { sourceBranch: { name: string }; targetBranch: { name: string } };
   res.json({
     merge_request: {
       id: mr.id,
       repo_id: mr.repoId,
       source_branch_id: mr.sourceBranchId,
       target_branch_id: mr.targetBranchId,
-      source_branch_name: mr.sourceBranch.name,
-      target_branch_name: mr.targetBranch.name,
+      source_branch_name: withBranches.sourceBranch.name,
+      target_branch_name: withBranches.targetBranch.name,
       title: mr.title,
       description: mr.description,
       status: mr.status,
@@ -135,8 +142,10 @@ mergeRequestsRouter.patch('/:mrId', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });
     return;
   }
+  const mrId = param(req, 'mrId');
+  const repoId = param(req, 'id');
   const mr = await prisma.mergeRequest.updateMany({
-    where: { id: req.params.mrId, repoId: req.params.id },
+    where: { id: mrId, repoId },
     data: {
       ...(parsed.data.title != null && { title: parsed.data.title }),
       ...(parsed.data.description != null && { description: parsed.data.description }),
@@ -148,7 +157,7 @@ mergeRequestsRouter.patch('/:mrId', async (req: Request, res: Response) => {
     return;
   }
   const updated = await prisma.mergeRequest.findFirst({
-    where: { id: req.params.mrId, repoId: req.params.id },
+    where: { id: mrId, repoId },
   });
   res.json({
     merge_request: updated
@@ -170,8 +179,8 @@ mergeRequestsRouter.patch('/:mrId', async (req: Request, res: Response) => {
 });
 
 mergeRequestsRouter.post('/:mrId/merge', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
-  const mrId = req.params.mrId;
-  const repoId = req.params.id;
+  const mrId = param(req, 'mrId');
+  const repoId = param(req, 'id');
   const userId = (req.user as { id: string }).id;
   const mrRow = await prisma.mergeRequest.findFirst({
     where: { id: mrId, repoId },
@@ -223,9 +232,10 @@ mergeRequestsRouter.post('/:mrId/merge', requireRepoRole('maintainer'), async (r
 
 mergeRequestsRouter.post('/:mrId/watchers', async (req: Request, res: Response) => {
   const userId = (req.user as { id: string }).id;
+  const mrId = param(req, 'mrId');
   await prisma.mergeRequestWatcher.upsert({
-    where: { mergeRequestId_userId: { mergeRequestId: req.params.mrId, userId } },
-    create: { mergeRequestId: req.params.mrId, userId },
+    where: { mergeRequestId_userId: { mergeRequestId: mrId, userId } },
+    create: { mergeRequestId: mrId, userId },
     update: {},
   });
   res.json({ ok: true });
@@ -234,7 +244,7 @@ mergeRequestsRouter.post('/:mrId/watchers', async (req: Request, res: Response) 
 mergeRequestsRouter.delete('/:mrId/watchers/me', async (req: Request, res: Response) => {
   const userId = (req.user as { id: string }).id;
   await prisma.mergeRequestWatcher.deleteMany({
-    where: { mergeRequestId: req.params.mrId, userId },
+    where: { mergeRequestId: param(req, 'mrId'), userId },
   });
   res.json({ ok: true });
 });

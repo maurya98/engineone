@@ -9,7 +9,7 @@ export const executeRouter = Router();
 
 const executeSchema = z.object({
   repoId: z.string().uuid(),
-  context: z.record(z.unknown()),
+  context: z.record(z.string(), z.unknown()),
   branch: z.string().optional(),
 });
 
@@ -62,10 +62,17 @@ executeRouter.post('/', async (req: Request, res: Response) => {
     return;
   }
 
+  const loader = async (key: string) => {
+    const path = `${key}.json`;
+    const subContent = await treeService.getFileContent(repoId, branch, path);
+    if (subContent === null) throw new Error(`Decision not found: ${key}`);
+    return Buffer.from(subContent, 'utf-8');
+  };
+
   let result: unknown;
   try {
     const { ZenEngine } = await import('@gorules/zen-engine');
-    const engine = new ZenEngine();
+    const engine = new ZenEngine({ loader });
     const graph = JSON.parse(content);
     const decision = engine.createDecision(graph);
     result = await decision.evaluate(context);

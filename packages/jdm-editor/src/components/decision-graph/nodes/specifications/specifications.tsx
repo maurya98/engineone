@@ -1,4 +1,5 @@
 import { decisionTableSpecification } from './decision-table.specification';
+import { decisionSpecification } from './decision.specification';
 import { expressionSpecification } from './expression.specification';
 import { functionSpecification } from './function.specification';
 import { inputSpecification } from './input.specification';
@@ -15,6 +16,7 @@ export const nodeSpecification = makeNodeSpecification({
   [NodeKind.Input]: inputSpecification,
   [NodeKind.Output]: outputSpecification,
   [NodeKind.DecisionTable]: decisionTableSpecification,
+  [NodeKind.Decision]: decisionSpecification,
   [NodeKind.Expression]: expressionSpecification,
   [NodeKind.Function]: functionSpecification,
   [NodeKind.Switch]: switchSpecification,

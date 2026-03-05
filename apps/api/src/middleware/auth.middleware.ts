@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { getWorkspaceRole } from '../services/workspace.service.js';
 import { getRepositoryById, getRepoRole } from '../services/repo.service.js';
+import { param } from '../utils/param.js';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (req.isAuthenticated?.() && req.user) {
@@ -27,7 +28,7 @@ export async function requireWorkspaceAdmin(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const workspaceId = req.params.workspaceId;
+  const workspaceId = param(req, 'workspaceId');
   if (!workspaceId) {
     res.status(400).json({ error: 'Missing workspaceId' });
     return;
@@ -49,7 +50,7 @@ export async function requireWorkspaceAdmin(
 export function requireRepoRole(minRole: 'qa' | 'developer' | 'maintainer') {
   const order = { qa: 0, developer: 1, maintainer: 2 };
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const repoId = req.params.repoId ?? req.params.id;
+    const repoId = param(req, 'repoId') || param(req, 'id');
     if (!repoId) {
       res.status(400).json({ error: 'Missing repo id' });
       return;

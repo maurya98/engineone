@@ -37,6 +37,9 @@ export type DecisionGraphEmptyType = {
 
   simulate?: DecisionGraphStoreType['state']['simulate'];
 
+  /** Available decision keys for decision node key dropdown (e.g. JSON paths without .json) */
+  decisionKeys?: string[];
+
   dictionaries?: DictionaryMap;
   mode?: JdmUiMode;
 
@@ -60,6 +63,7 @@ export const DecisionGraphEmpty: React.FC<DecisionGraphEmptyType> = ({
   hideLeftToolbar,
   panels,
   simulate,
+  decisionKeys,
   dictionaries,
   mode,
   viewConfigCta,
@@ -116,6 +120,10 @@ export const DecisionGraphEmpty: React.FC<DecisionGraphEmptyType> = ({
   useEffect(() => {
     stateStore.setState({ simulate });
   }, [simulate]);
+
+  useEffect(() => {
+    stateStore.setState({ decisionKeys: Array.isArray(decisionKeys) ? decisionKeys : [] });
+  }, [decisionKeys]);
 
   useEffect(() => {
     listenerStore.setState({
