@@ -1,0 +1,104 @@
+.wiki-markdown-preview {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text, #1f2937);
+}
+
+.wiki-markdown-preview h1,
+.wiki-markdown-preview h2,
+.wiki-markdown-preview h3 {
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.wiki-markdown-preview h1 { font-size: 1.5rem; }
+.wiki-markdown-preview h2 { font-size: 1.25rem; }
+.wiki-markdown-preview h3 { font-size: 1.125rem; }
+
+.wiki-markdown-preview h1:first-child,
+.wiki-markdown-preview h2:first-child,
+.wiki-markdown-preview h3:first-child {
+  margin-top: 0;
+}
+
+.wiki-markdown-preview p {
+  margin: 0 0 0.75em;
+}
+
+.wiki-markdown-preview ul,
+.wiki-markdown-preview ol {
+  margin: 0 0 0.75em;
+  padding-left: 1.5em;
+}
+
+.wiki-markdown-preview pre {
+  margin: 0.75em 0;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 6px;
+  overflow: auto;
+  font-size: 0.875em;
+}
+
+.wiki-markdown-preview pre:not(.mermaid) code {
+  background: none;
+  padding: 0;
+}
+
+.wiki-markdown-preview code {
+  padding: 0.15em 0.4em;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.wiki-markdown-preview blockquote {
+  margin: 0.75em 0;
+  padding-left: 1em;
+  border-left: 4px solid var(--border, #e5e7eb);
+  color: var(--text-muted, #6b7280);
+}
+
+.wiki-markdown-preview a {
+  color: var(--accent, #2563eb);
+  text-decoration: none;
+}
+
+.wiki-markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.wiki-markdown-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75em 0;
+}
+
+.wiki-markdown-preview th,
+.wiki-markdown-preview td {
+  border: 1px solid var(--border, #e5e7eb);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.wiki-markdown-preview th {
+  font-weight: 600;
+  background: var(--bg-secondary, #f3f4f6);
+}
+
+.wiki-markdown-preview .mermaid {
+  margin: 1em 0;
+  display: flex;
+  justify-content: center;
+}
+
+.wiki-markdown-preview .mermaid svg {
+  max-width: 100%;
+}
+
+.wiki-preview-empty {
+  color: var(--text-muted, #6b7280);
+  font-style: italic;
+  margin: 0;
+}

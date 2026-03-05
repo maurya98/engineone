@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
 import CodeTab from '../components/repo/CodeTab';
 import IssueTab from '../components/repo/IssueTab';
+import WikiTab from '../components/repo/WikiTab';
 import BranchTab from '../components/repo/BranchTab';
 import PullRequestTab from '../components/repo/PullRequestTab';
 import './RepoPage.css';
@@ -52,7 +53,7 @@ export default function RepoPage() {
               <Route path="issues" element={<IssueTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
               <Route path="branches" element={<BranchTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
               <Route path="pull_requests" element={<PullRequestTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
-              <Route path="wiki" element={<div className="placeholder">Wiki</div>} />
+              <Route path="wiki" element={<WikiTab repoId={repoId!} />} />
               <Route path="settings" element={<div className="placeholder">Settings</div>} />
             </Routes>
           </div>
