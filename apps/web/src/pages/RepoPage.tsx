@@ -4,6 +4,7 @@ import { apiFetch } from '../lib/api';
 import CodeTab from '../components/repo/CodeTab';
 import IssueTab from '../components/repo/IssueTab';
 import BranchTab from '../components/repo/BranchTab';
+import PullRequestTab from '../components/repo/PullRequestTab';
 import './RepoPage.css';
 
 const TABS = [
@@ -50,7 +51,7 @@ export default function RepoPage() {
               <Route path="/" element={<CodeTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
               <Route path="issues" element={<IssueTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
               <Route path="branches" element={<BranchTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
-              <Route path="pull_requests" element={<div className="placeholder">Pull Requests</div>} />
+              <Route path="pull_requests" element={<PullRequestTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
               <Route path="wiki" element={<div className="placeholder">Wiki</div>} />
               <Route path="settings" element={<div className="placeholder">Settings</div>} />
             </Routes>

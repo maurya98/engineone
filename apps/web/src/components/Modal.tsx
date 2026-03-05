@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { getToken } from '../lib/authToken';
+import { apiFetch } from '../lib/api';
 import './Modal.css';
 
 interface ModalProps {
@@ -58,25 +58,14 @@ export function CreateWorkspaceModal({ onClose, onSuccess }: CreateWorkspaceModa
     }
     setSubmitting(true);
     try {
-      const token = getToken();
-      const res = await fetch('/workspaces', {
+      await apiFetch('/workspaces', {
         method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({ name: trimmed }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || 'Failed to create workspace');
-        return;
-      }
       onSuccess();
       onClose();
-    } catch {
-      setError('Request failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed');
     } finally {
       setSubmitting(false);
     }
@@ -137,25 +126,14 @@ export function CreateRepoModal({
     }
     setSubmitting(true);
     try {
-      const token = getToken();
-      const res = await fetch(`/workspaces/${workspaceId}/repos`, {
+      await apiFetch(`/workspaces/${workspaceId}/repos`, {
         method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({ name: trimmed }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || 'Failed to create repository');
-        return;
-      }
       onSuccess();
       onClose();
-    } catch {
-      setError('Request failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed');
     } finally {
       setSubmitting(false);
     }

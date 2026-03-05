@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { apiFetch } from '../../lib/api';
+import { apiFetch, apiFetchText } from '../../lib/api';
+import { getToken } from '../../lib/authToken';
 import {
   loadDraftFromStorage,
   saveDraftToStorage,
@@ -280,12 +281,13 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
   const getFileContent = useCallback(
     async (path: string): Promise<string> => {
       if (draft[path] !== undefined) return draft[path];
-      const res = await window.fetch(
-        `/repos/${repoId}/files?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(path)}`,
-        { credentials: 'include' }
-      );
-      if (!res.ok) return '';
-      return res.text();
+      try {
+        return await apiFetchText(
+          `/repos/${repoId}/files?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(path)}`
+        );
+      } catch {
+        return '';
+      }
     },
     [repoId, branch, draft]
   );
@@ -319,7 +321,10 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
                 const res = await window.fetch('/simulate', {
                   method: 'POST',
                   credentials: 'include',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+                  },
                   body: JSON.stringify({ content: graph, context: context ?? {}, decisions }),
                 });
                 const data = await res.json().catch(() => ({}));

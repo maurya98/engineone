@@ -46,9 +46,15 @@ reposRouter.get('/:id/files', requireRepoRole('qa'), async (req: Request, res: R
     res.status(400).json({ error: 'Missing path query' });
     return;
   }
-  const branch = (req.query.branch as string) || (req as any).repo?.default_branch_name || 'main';
   const repoId = param(req, 'id');
-  const content = await treeService.getFileContent(repoId, branch, path);
+  const commitId = req.query.commit as string | undefined;
+  let content: string | null;
+  if (commitId) {
+    content = await treeService.getFileContentByCommitId(repoId, commitId, path);
+  } else {
+    const branch = (req.query.branch as string) || (req as any).repo?.default_branch_name || 'main';
+    content = await treeService.getFileContent(repoId, branch, path);
+  }
   if (content === null) {
     res.status(404).json({ error: 'File not found' });
     return;

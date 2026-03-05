@@ -29,3 +29,16 @@ export async function getFileContent(
   if (!entry) return null;
   return blobService.getBlob(repoId, entry.blob_id);
 }
+
+export async function getFileContentByCommitId(
+  repoId: string,
+  commitId: string,
+  path: string
+): Promise<string | null> {
+  const commit = await vcsService.getCommitById(commitId);
+  if (!commit || commit.repo_id !== repoId) return null;
+  const entries = await vcsService.getTreeEntries(commitId);
+  const entry = entries.find((e) => e.path === path && e.kind === 'file');
+  if (!entry) return null;
+  return blobService.getBlob(repoId, entry.blob_id);
+}

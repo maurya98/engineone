@@ -59,6 +59,26 @@ vcsRouter.get('/commits/graph', async (req: Request, res: Response) => {
   res.json({ commits: graph });
 });
 
+vcsRouter.get('/commits/:commitId', async (req: Request, res: Response) => {
+  const repoId = param(req, 'id');
+  const commitId = param(req, 'commitId');
+  const commit = await vcsService.getCommitById(commitId);
+  if (!commit || commit.repo_id !== repoId) {
+    res.status(404).json({ error: 'Commit not found' });
+    return;
+  }
+  res.json({
+    commit: {
+      id: commit.id,
+      repo_id: commit.repo_id,
+      author_id: commit.author_id,
+      parent_commit_id: commit.parent_commit_id,
+      message: commit.message,
+      created_at: commit.created_at,
+    },
+  });
+});
+
 vcsRouter.post('/commits', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
   const parsed = createCommitSchema.safeParse(req.body);
   if (!parsed.success) {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getToken, setToken, clearToken } from '../lib/authToken';
+import { apiFetch } from '../lib/api';
 
 export interface User {
   id: string;
@@ -38,17 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const res = await fetch('/users/me', {
-        credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      } else {
-        clearToken();
-        setUser(null);
-      }
+      const data = await apiFetch<{ user: User }>('/users/me');
+      setUser(data.user);
     } catch {
       clearToken();
       setUser(null);
@@ -67,33 +59,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch('/auth/login', {
+    const data = await apiFetch<{ user: User; token: string }>('/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Login failed');
-    }
-    const data = await res.json();
     setToken(data.token);
     setUser(data.user);
   }, []);
 
   const logout = useCallback(async () => {
-    const token = getToken();
-    if (token) {
-      try {
-        await fetch('/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      } catch {
-        // ignore
-      }
+    try {
+      await apiFetch('/auth/logout', { method: 'POST' });
+    } catch {
+      // ignore
     }
     clearToken();
     setUser(null);

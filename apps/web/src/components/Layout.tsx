@@ -5,7 +5,6 @@ import { CreateWorkspaceModal } from './Modal';
 import { DeleteIcon } from './icons/DeleteIcon';
 import { WORKSPACES_CHANGED, emitWorkspacesChanged } from '../lib/events';
 import { apiFetch } from '../lib/api';
-import { getToken } from '../lib/authToken';
 import './Layout.css';
 
 export default function Layout() {
@@ -122,21 +121,16 @@ function DashboardSidebar({
   const loadWorkspaces = async () => {
     setLoading(true);
     try {
-      const token = getToken();
-      const res = await fetch('/workspaces', {
-        credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        let list = data.workspaces || [];
-        if (searchQuery) {
-          list = list.filter((w: { name: string }) =>
-            w.name.toLowerCase().includes(searchQuery.toLowerCase())
-          );
-        }
-        setWorkspaces(list);
+      const data = await apiFetch<{ workspaces: { id: string; name: string }[] }>('/workspaces');
+      let list = data.workspaces || [];
+      if (searchQuery) {
+        list = list.filter((w) =>
+          w.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
       }
+      setWorkspaces(list);
+    } catch {
+      setWorkspaces([]);
     } finally {
       setLoading(false);
     }
