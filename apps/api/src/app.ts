@@ -11,6 +11,7 @@ import { usersRouter } from './routes/users.routes.js';
 import { workspacesRouter } from './routes/workspaces.routes.js';
 import { reposRouter } from './routes/repos.routes.js';
 import { executeRouter } from './routes/execute.routes.js';
+import { simulateRouter } from './routes/simulate.routes.js';
 
 export async function createApp() {
   const app = express();
@@ -50,6 +51,7 @@ export async function createApp() {
   app.use('/workspaces', workspacesRouter);
   app.use('/repos', reposRouter);
   app.use('/execute', executeRouter);
+  app.use('/simulate', simulateRouter);
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });

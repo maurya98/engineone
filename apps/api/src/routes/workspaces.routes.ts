@@ -61,7 +61,7 @@ workspacesRouter.patch('/:workspaceId', requireWorkspaceAdmin, async (req: Reque
   res.json({ workspace: ws });
 });
 
-workspacesRouter.delete('/:workspaceId', requireWorkspaceAdmin, async (req: Request, res: Response) => {
+workspacesRouter.delete('/:workspaceId', requireSuperAdmin, async (req: Request, res: Response) => {
   const ok = await workspaceService.deleteWorkspace(req.params.workspaceId);
   if (!ok) {
     res.status(404).json({ error: 'Workspace not found' });

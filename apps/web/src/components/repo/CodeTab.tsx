@@ -1,10 +1,16 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { apiFetch } from '../../lib/api';
 import {
   loadDraftFromStorage,
   saveDraftToStorage,
   clearDraftStorage,
 } from '../../lib/draftStorage';
+import { useTheme } from '../../context/ThemeContext';
+import { JdmConfigProvider, DecisionGraph, GraphSimulator } from '@gorules/jdm-editor';
+import type { DecisionGraphType, Simulation, SimulationOk } from '@gorules/jdm-editor';
+import { decisionModelSchema } from '@gorules/jdm-editor/dist/schema';
+import { PlayCircleOutlined } from '@ant-design/icons';
+import '@gorules/jdm-editor/dist/style.css';
 import './CodeTab.css';
 
 interface TreeEntry {
@@ -94,8 +100,90 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
   const [deletedPaths, setDeletedPaths] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<{ path: string; kind: 'file' | 'folder'; x: number; y: number } | null>(null);
   const [moveModal, setMoveModal] = useState<{ path: string; kind: 'file' | 'folder' } | null>(null);
+  const [jsonEditorValue, setJsonEditorValue] = useState<DecisionGraphType | null>(null);
+  const [jsonLoadError, setJsonLoadError] = useState<string | null>(null);
+  const [jsonLoading, setJsonLoading] = useState(false);
+  const [simulate, setSimulate] = useState<Simulation | undefined>(undefined);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasRestoredRef = useRef<string | null>(null);
+
+  const simulatorPanels = useMemo(
+    () => [
+      {
+        id: 'simulator',
+        title: 'Simulator',
+        icon: <PlayCircleOutlined />,
+        hideHeader: true,
+        renderPanel: () => (
+          <GraphSimulator
+            defaultRequest={'{}\n'}
+            onClear={() => setSimulate(undefined)}
+            onRun={async ({ graph, context }) => {
+              try {
+                const res = await window.fetch('/simulate', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ content: graph, context: context ?? {} }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                  const errData = (data as { data?: { nodeId?: string; type?: string; source?: string } }).data;
+                  setSimulate({
+                    error: {
+                      message: (data as { details?: string }).details ?? (data as { error?: string }).error,
+                      data: { nodeId: errData?.nodeId },
+                    },
+                    result: {
+                      trace: ((data as { data?: { trace?: Record<string, unknown> } }).data?.trace ?? {}) as SimulationOk['trace'],
+                      result: { error: (data as { details?: string }).details },
+                      performance: '',
+                      snapshot: graph,
+                    },
+                  });
+                  return;
+                }
+                setSimulate({ result: { ...data, snapshot: graph } as SimulationOk });
+              } catch (err) {
+                const message = err instanceof Error ? err.message : 'Simulation failed';
+                setSimulate({
+                  error: { message, data: { nodeId: undefined } },
+                  result: {
+                    trace: {} as SimulationOk['trace'],
+                    result: { error: message },
+                    performance: '',
+                    snapshot: graph,
+                  },
+                });
+              }
+            }}
+          />
+        ),
+      },
+    ],
+    []
+  );
+
+  const { effectiveTheme } = useTheme();
+  const jdmTheme = useMemo(() => {
+    const isDark = effectiveTheme === 'dark';
+    return {
+      mode: effectiveTheme as 'light' | 'dark',
+      token: {
+        colorPrimary: isDark ? '#58a6ff' : '#0969da',
+        colorPrimaryHover: isDark ? '#79b8ff' : '#0550ae',
+        colorPrimaryActive: isDark ? '#388bfd' : '#0969da',
+        colorBgLayout: isDark ? '#0f1117' : '#ffffff',
+        colorBgContainer: isDark ? '#0f1117' : '#ffffff',
+        colorBgElevated: isDark ? '#161b22' : '#f6f8fa',
+        colorText: isDark ? '#e6edf3' : '#1f2328',
+        colorTextSecondary: isDark ? '#8b949e' : '#656d76',
+        colorTextPlaceholder: isDark ? '#6e7681' : '#8c959f',
+        colorBorder: isDark ? '#30363d' : '#d0d7de',
+        colorBorderSecondary: isDark ? '#21262d' : '#d8dee4',
+      },
+    };
+  }, [effectiveTheme]);
 
   const loadBranches = useCallback(async () => {
     try {
@@ -127,6 +215,55 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
   useEffect(() => {
     loadTree();
   }, [loadTree]);
+
+  // Load JSON content for JDM Editor when a .json file is selected.
+  // Implementation follows: https://docs.gorules.io/developers/jdm/jdm-editor
+  useEffect(() => {
+    if (!selectedPath || !selectedPath.toLowerCase().endsWith('.json')) {
+      setJsonEditorValue(null);
+      setJsonLoadError(null);
+      setJsonLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setJsonLoadError(null);
+    setJsonLoading(true);
+    (async () => {
+      try {
+        const content = draft[selectedPath] !== undefined
+          ? draft[selectedPath]
+          : await getFileContent(selectedPath);
+        if (cancelled) return;
+        const trimmed = (content ?? '').trim();
+        if (!trimmed) {
+          const emptyResult = decisionModelSchema.safeParse({ nodes: [], edges: [] });
+          if (emptyResult.success) setJsonEditorValue(emptyResult.data);
+          else setJsonEditorValue({ nodes: [], edges: [] });
+          if (!cancelled) setJsonLoading(false);
+          return;
+        }
+        const parsed: unknown = JSON.parse(trimmed);
+        const result = decisionModelSchema.safeParse(parsed);
+        if (result.success) {
+          setJsonEditorValue(result.data);
+        } else {
+          setJsonLoadError(
+            result.error.errors?.length
+              ? result.error.errors.map((e) => e.message).join('; ')
+              : 'Invalid JDM file. See https://docs.gorules.io/developers/jdm/jdm-editor'
+          );
+          setJsonEditorValue(null);
+        }
+      } catch (e) {
+        if (cancelled) return;
+        setJsonLoadError(e instanceof Error ? e.message : 'Failed to load or parse JSON.');
+        setJsonEditorValue(null);
+      } finally {
+        if (!cancelled) setJsonLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedPath]);
 
   // Restore draft from localStorage after tree has loaded for this branch
   useEffect(() => {
@@ -514,9 +651,41 @@ export default function CodeTab({ repoId, defaultBranch }: CodeTabProps) {
             </ul>
           )}
         </div>
-        <div className="code-main">
+        <div className={`code-main${!jsonLoading && jsonEditorValue != null && selectedPath?.toLowerCase().endsWith('.json') ? ' code-main--jdm' : ''}`}>
           {selectedPath ? (
-            <p className="muted">Preview not implemented for this file.</p>
+            selectedPath.toLowerCase().endsWith('.json') ? (
+              <>
+                {jsonLoading && <p className="muted">Loading…</p>}
+                {!jsonLoading && jsonLoadError && (
+                  <p className="muted" role="alert">{jsonLoadError}</p>
+                )}
+                {!jsonLoading && jsonEditorValue != null && (
+                  <div className="code-jdm-editor-wrap">
+                    <div className="code-jdm-editor-inner">
+                      <JdmConfigProvider theme={jdmTheme}>
+                        <DecisionGraph
+                          value={jsonEditorValue}
+                          onChange={(next) => {
+                            setJsonEditorValue(next);
+                            setDraft((prev) => ({
+                              ...prev,
+                              [selectedPath]: JSON.stringify(next, null, 2),
+                            }));
+                          }}
+                          simulate={simulate}
+                          panels={simulatorPanels}
+                        />
+                      </JdmConfigProvider>
+                    </div>
+                  </div>
+                )}
+                {!jsonLoading && !jsonLoadError && jsonEditorValue == null && (
+                  <p className="muted">Not a valid JDM file.</p>
+                )}
+              </>
+            ) : (
+              <p className="muted">Preview not implemented for this file.</p>
+            )
           ) : (
             <p className="muted">Select a file from the tree.</p>
           )}

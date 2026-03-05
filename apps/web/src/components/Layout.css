@@ -148,6 +148,40 @@
   margin-bottom: 0.25rem;
 }
 
+.sidebar-workspace-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sidebar-workspace-row > button:first-child {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.sidebar-workspace-row .sidebar-delete-workspace {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-workspace-row .sidebar-delete-workspace:hover {
+  background: var(--bg);
+  color: var(--danger, #c53030);
+}
+
 .sidebar-list button, .sidebar-sublist button {
   display: block;
   width: 100%;
@@ -231,6 +265,9 @@
 
 .dashboard-actions {
   margin: 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .btn-primary {
@@ -245,6 +282,21 @@
 
 .btn-primary:hover {
   filter: brightness(1.1);
+}
+
+.btn-danger {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--danger, #c53030);
+  border: 1px solid var(--danger, #c53030);
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: var(--danger, #c53030);
+  color: #fff;
 }
 
 .dashboard-header {
@@ -263,6 +315,39 @@
   padding: 0;
   display: grid;
   gap: 0.75rem;
+}
+
+.dashboard-repo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-repo-row .dashboard-repo-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-repo-row .dashboard-repo-delete {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-repo-row .dashboard-repo-delete:hover {
+  background: var(--bg);
+  color: var(--danger, #c53030);
 }
 
 .dashboard-repo-card {

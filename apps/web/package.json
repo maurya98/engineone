@@ -8,6 +8,8 @@
     "dev": "vite"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.5.0",
+    "@gorules/jdm-editor": "file:../../packages/jdm-editor",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"

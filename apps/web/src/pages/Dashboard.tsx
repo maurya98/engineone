@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { CreateWorkspaceModal, CreateRepoModal } from '../components/Modal';
+import { DeleteIcon } from '../components/icons/DeleteIcon';
 import { emitWorkspacesChanged } from '../lib/events';
 
 interface Workspace {
@@ -83,6 +84,34 @@ export default function Dashboard() {
       .catch(() => {});
   };
 
+  const handleDeleteWorkspace = async () => {
+    if (!workspaceId || !workspaceName) return;
+    if (!window.confirm(`Delete workspace "${workspaceName}"? This will remove all repositories and cannot be undone.`)) return;
+    try {
+      await apiFetch(`/workspaces/${workspaceId}`, { method: 'DELETE' });
+      loadWorkspaces();
+      emitWorkspacesChanged();
+      navigate('/');
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Failed to delete workspace');
+    }
+  };
+
+  const handleDeleteRepo = async (e: React.MouseEvent, r: Repository) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.confirm(`Delete repository "${r.name}"? This cannot be undone.`)) return;
+    try {
+      await apiFetch(`/repos/${r.id}`, { method: 'DELETE' });
+      if (workspaceId) {
+        const data = await apiFetch<{ repositories: Repository[] }>(`/workspaces/${workspaceId}/repos`);
+        setRepos(data.repositories || []);
+      }
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Failed to delete repository');
+    }
+  };
+
   const isSuperAdmin = user?.role === 'super_admin';
 
   if (loading && !workspaceId) {
@@ -134,6 +163,15 @@ export default function Dashboard() {
         >
           + New repository
         </button>
+        {isSuperAdmin && (
+          <button
+            type="button"
+            className="btn-danger"
+            onClick={handleDeleteWorkspace}
+          >
+            Delete workspace
+          </button>
+        )}
       </div>
       {reposLoading ? (
         <p className="text-muted">Loading repositories...</p>
@@ -142,7 +180,7 @@ export default function Dashboard() {
       ) : (
         <ul className="dashboard-repo-list">
           {repos.map((r) => (
-            <li key={r.id}>
+            <li key={r.id} className="dashboard-repo-row">
               <button
                 type="button"
                 className="dashboard-repo-card"
@@ -150,6 +188,15 @@ export default function Dashboard() {
               >
                 <span className="dashboard-repo-name">{r.name}</span>
                 <span className="dashboard-repo-meta">Default branch: {r.default_branch_name}</span>
+              </button>
+              <button
+                type="button"
+                className="dashboard-repo-delete"
+                title="Delete repository"
+                onClick={(e) => handleDeleteRepo(e, r)}
+                aria-label={`Delete repository ${r.name}`}
+              >
+                <DeleteIcon size={18} />
               </button>
             </li>
           ))}

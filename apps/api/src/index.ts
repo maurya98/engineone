@@ -1,10 +1,8 @@
-import { createApp } from './app.js';
-import { config } from './config.js';
-import { runMigrations } from './db/migrate.js';
-import { seedSuperadmin } from './db/seed.js';
+import { createApp } from './app';
+import { config } from './config';
+import { seedSuperadmin } from './db/seed';
 
 async function main() {
-  await runMigrations();
   await seedSuperadmin();
   const app = await createApp();
   app.listen(config.port, () => {

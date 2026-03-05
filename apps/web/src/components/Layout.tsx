@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CreateWorkspaceModal } from './Modal';
-import { WORKSPACES_CHANGED } from '../lib/events';
+import { DeleteIcon } from './icons/DeleteIcon';
+import { WORKSPACES_CHANGED, emitWorkspacesChanged } from '../lib/events';
+import { apiFetch } from '../lib/api';
 import './Layout.css';
 
 export default function Layout() {
@@ -147,6 +149,22 @@ function DashboardSidebar({
 
   const isSuperAdmin = user?.role === 'super_admin';
 
+  const handleDeleteWorkspace = async (e: React.MouseEvent, ws: { id: string; name: string }) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.confirm(`Delete workspace "${ws.name}"? This cannot be undone.`)) return;
+    try {
+      await apiFetch(`/workspaces/${ws.id}`, { method: 'DELETE' });
+      loadWorkspaces();
+      emitWorkspacesChanged();
+      if (currentWorkspaceId === ws.id) {
+        navigate('/');
+      }
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Failed to delete workspace');
+    }
+  };
+
   return (
     <div className="sidebar-inner">
       <h3 className="sidebar-title">Workspaces</h3>
@@ -164,7 +182,7 @@ function DashboardSidebar({
       ) : (
         <ul className="sidebar-list">
           {workspaces.map((ws) => (
-            <li key={ws.id}>
+            <li key={ws.id} className="sidebar-workspace-row">
               <button
                 type="button"
                 className={currentWorkspaceId === ws.id ? 'active' : ''}
@@ -172,6 +190,17 @@ function DashboardSidebar({
               >
                 {ws.name}
               </button>
+              {isSuperAdmin && (
+                <button
+                  type="button"
+                  className="sidebar-delete-workspace"
+                  title="Delete workspace"
+                  onClick={(e) => handleDeleteWorkspace(e, ws)}
+                  aria-label={`Delete workspace ${ws.name}`}
+                >
+                  <DeleteIcon size={16} />
+                </button>
+              )}
             </li>
           ))}
         </ul>
