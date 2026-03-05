@@ -1,15 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 export default function Login() {
-  const { user, login } = useAuth();
+  const { user, login, sessionExpired, clearSessionExpired } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (sessionExpired) {
+      setError('Your session has expired. Please sign in again.');
+      clearSessionExpired();
+    }
+  }, [sessionExpired, clearSessionExpired]);
 
   if (user) return <Navigate to="/" replace />;
 

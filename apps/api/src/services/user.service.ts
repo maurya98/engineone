@@ -86,3 +86,50 @@ export async function updateUserProfile(
   });
   return toSafeUser(fromPrismaUser(u));
 }
+
+export async function updateUserRole(
+  userId: string,
+  role: User['role']
+): Promise<UserSafe> {
+  const u = await prisma.user.update({
+    where: { id: userId },
+    data: { role },
+  });
+  return toSafeUser(fromPrismaUser(u));
+}
+
+export async function deleteUser(userId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      workspacesCreated: { select: { id: true } },
+      _count: {
+        select: {
+          commits: true,
+          mergeRequests: true,
+          issues: true,
+          tagsCreated: true,
+        },
+      },
+    },
+  });
+  if (!u) {
+    return { ok: false, reason: 'User not found' };
+  }
+  if (u.workspacesCreated.length > 0) {
+    return { ok: false, reason: 'Cannot delete user: they own workspaces. Transfer or delete those workspaces first.' };
+  }
+  const { commits, mergeRequests, issues, tagsCreated } = u._count;
+  if (commits > 0 || mergeRequests > 0 || issues > 0 || tagsCreated > 0) {
+    return { ok: false, reason: 'Cannot delete user: they have commits, merge requests, issues, or tags. Reassign or remove those first.' };
+  }
+  try {
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: 'Cannot delete user: they have associated data that must be removed first.' };
+  }
+}

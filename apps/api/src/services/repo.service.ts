@@ -64,6 +64,77 @@ export async function listRepositoriesByWorkspace(workspaceId: string): Promise<
   return list.map(toRepository);
 }
 
+/** Repos in this workspace that the user is a member of (for users who have repo-only access). */
+export async function listRepositoriesInWorkspaceForUser(
+  workspaceId: string,
+  userId: string
+): Promise<Repository[]> {
+  const list = await prisma.repository.findMany({
+    where: {
+      workspaceId,
+      members: { some: { userId } },
+    },
+    orderBy: { name: 'asc' },
+  });
+  return list.map(toRepository);
+}
+
+/** All repos the user is a member of (for "Your repositories" list).
+ * Also includes all repos in workspaces where the user has admin role. */
+export async function listRepositoriesForUser(
+  userId: string
+): Promise<{ id: string; name: string; workspace_id: string; workspace_name: string; default_branch_name: string }[]> {
+  const [memberships, adminWorkspaceIds] = await Promise.all([
+    prisma.repoMember.findMany({
+      where: { userId },
+      include: {
+        repo: {
+          include: { workspace: { select: { id: true, name: true } } },
+        },
+      },
+    }),
+    prisma.workspaceMember.findMany({
+      where: { userId, role: 'admin' },
+      select: { workspaceId: true },
+    }).then((rows) => rows.map((r) => r.workspaceId)),
+  ]);
+
+  const byId = new Map<string, { id: string; name: string; workspace_id: string; workspace_name: string; default_branch_name: string }>();
+
+  for (const m of memberships) {
+    byId.set(m.repo.id, {
+      id: m.repo.id,
+      name: m.repo.name,
+      workspace_id: m.repo.workspaceId,
+      workspace_name: m.repo.workspace.name,
+      default_branch_name: m.repo.defaultBranchName,
+    });
+  }
+
+  if (adminWorkspaceIds.length > 0) {
+    const adminRepos = await prisma.repository.findMany({
+      where: { workspaceId: { in: adminWorkspaceIds } },
+      include: { workspace: { select: { id: true, name: true } } },
+      orderBy: { name: 'asc' },
+    });
+    for (const r of adminRepos) {
+      if (!byId.has(r.id)) {
+        byId.set(r.id, {
+          id: r.id,
+          name: r.name,
+          workspace_id: r.workspaceId,
+          workspace_name: r.workspace.name,
+          default_branch_name: r.defaultBranchName,
+        });
+      }
+    }
+  }
+
+  return [...byId.values()].sort(
+    (a, b) => a.workspace_name.localeCompare(b.workspace_name) || a.name.localeCompare(b.name)
+  );
+}
+
 export async function updateRepository(
   id: string,
   data: { name?: string; default_branch_name?: string }
@@ -117,4 +188,35 @@ export async function removeRepoMember(repoId: string, userId: string): Promise<
     where: { repoId, userId },
   });
   return result.count > 0;
+}
+
+/** All users in the database who are not yet repo members. Optional search by email/display_name. */
+export async function listAvailableUsersForRepo(
+  repoId: string,
+  search?: string
+): Promise<{ id: string; email: string; display_name: string | null }[]> {
+  const existingRepoUserIds = await prisma.repoMember.findMany({
+    where: { repoId },
+    select: { userId: true },
+  });
+  const existingIds = existingRepoUserIds.map((m) => m.userId);
+  const searchLower = search?.trim().toLowerCase();
+  const users = await prisma.user.findMany({
+    where: {
+      id: { notIn: existingIds },
+      ...(searchLower && {
+        OR: [
+          { email: { contains: searchLower, mode: 'insensitive' } },
+          { displayName: { contains: searchLower, mode: 'insensitive' } },
+        ],
+      }),
+    },
+    select: { id: true, email: true, displayName: true },
+    orderBy: { email: 'asc' },
+  });
+  return users.map((u) => ({
+    id: u.id,
+    email: u.email,
+    display_name: u.displayName,
+  }));
 }

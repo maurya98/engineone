@@ -16,6 +16,7 @@ interface Repository {
   name: string;
   workspace_id: string;
   default_branch_name: string;
+  workspace_name?: string;
 }
 
 export default function Dashboard() {
@@ -23,12 +24,17 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [myRepos, setMyRepos] = useState<Repository[]>([]);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
-  const [repos, setRepos] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reposLoading, setReposLoading] = useState(false);
+  const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const [showCreateRepo, setShowCreateRepo] = useState(false);
+
+  // Repos in the selected workspace: from /users/me/repos filtered by workspace
+  const repos = workspaceId
+    ? myRepos.filter((r) => r.workspace_id === workspaceId)
+    : [];
 
   const loadWorkspaces = () => {
     apiFetch<{ workspaces: Workspace[] }>('/workspaces')
@@ -37,9 +43,25 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
+  const loadMyRepos = () => {
+    apiFetch<{ repositories: Repository[] }>('/users/me/repos')
+      .then((data) => setMyRepos(data.repositories || []))
+      .catch(() => setMyRepos([]));
+  };
+
+  const loadInitial = () => {
     setLoading(true);
-    loadWorkspaces();
+    Promise.all([
+      apiFetch<{ workspaces: Workspace[] }>('/workspaces').then((d) => d.workspaces || []).catch(() => []),
+      apiFetch<{ repositories: Repository[] }>('/users/me/repos').then((d) => d.repositories || []).catch(() => []),
+    ]).then(([ws, repos]) => {
+      setWorkspaces(ws);
+      setMyRepos(repos);
+    }).finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadInitial();
   }, []);
 
   useEffect(() => {
@@ -50,26 +72,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!workspaceId) {
-      setRepos([]);
       setWorkspaceName(null);
       return;
     }
-    setReposLoading(true);
-    Promise.all([
-      apiFetch<{ workspace: Workspace }>(`/workspaces/${workspaceId}`).then((d) => d.workspace),
-      apiFetch<{ repositories: Repository[] }>(`/workspaces/${workspaceId}/repos`).then(
-        (d) => d.repositories || []
-      ),
-    ])
-      .then(([ws, list]) => {
-        setWorkspaceName(ws.name);
-        setRepos(list);
-      })
-      .catch(() => {
-        setWorkspaceName(null);
-        setRepos([]);
-      })
-      .finally(() => setReposLoading(false));
+    setWorkspaceLoading(true);
+    apiFetch<{ workspace: Workspace }>(`/workspaces/${workspaceId}`)
+      .then((d) => setWorkspaceName(d.workspace.name))
+      .catch(() => setWorkspaceName(null))
+      .finally(() => setWorkspaceLoading(false));
   }, [workspaceId]);
 
   const handleCreateWorkspaceSuccess = () => {
@@ -78,9 +88,8 @@ export default function Dashboard() {
   };
 
   const handleCreateRepoSuccess = () => {
-    if (!workspaceId) return;
-    apiFetch<{ repositories: Repository[] }>(`/workspaces/${workspaceId}/repos`)
-      .then((d) => setRepos(d.repositories || []))
+    apiFetch<{ repositories: Repository[] }>('/users/me/repos')
+      .then((d) => setMyRepos(d.repositories || []))
       .catch(() => {});
   };
 
@@ -103,10 +112,8 @@ export default function Dashboard() {
     if (!window.confirm(`Delete repository "${r.name}"? This cannot be undone.`)) return;
     try {
       await apiFetch(`/repos/${r.id}`, { method: 'DELETE' });
-      if (workspaceId) {
-        const data = await apiFetch<{ repositories: Repository[] }>(`/workspaces/${workspaceId}/repos`);
-        setRepos(data.repositories || []);
-      }
+      const data = await apiFetch<{ repositories: Repository[] }>('/users/me/repos');
+      setMyRepos(data.repositories || []);
     } catch (err) {
       window.alert(err instanceof Error ? err.message : 'Failed to delete repository');
     }
@@ -118,13 +125,37 @@ export default function Dashboard() {
     return <div className="loading">Loading...</div>;
   }
 
-  // No workspace selected: show prompt on home
+  // No workspace selected: show prompt or "Your repositories" for repo-only users
   if (!workspaceId) {
     return (
       <div className="dashboard">
         <h1>Dashboard</h1>
-        <p className="text-muted">Select a workspace from the left sidebar to view its repositories.</p>
-        {workspaces.length === 0 && !isSuperAdmin && (
+        {workspaces.length > 0 ? (
+          <p className="text-muted">Select a workspace from the left sidebar to view its repositories.</p>
+        ) : myRepos.length > 0 ? (
+          <>
+            <p className="text-muted">Repositories you have access to</p>
+            <ul className="dashboard-repo-list">
+              {myRepos.map((r) => (
+                <li key={r.id} className="dashboard-repo-row">
+                  <button
+                    type="button"
+                    className="dashboard-repo-card"
+                    onClick={() => navigate(`/workspaces/${r.workspace_id}/repos/${r.id}`)}
+                  >
+                    <span className="dashboard-repo-name">{r.name}</span>
+                    <span className="dashboard-repo-meta">
+                      {r.workspace_name ? `${r.workspace_name} · ` : ''}Default branch: {r.default_branch_name}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className="text-muted">Select a workspace from the left sidebar to view its repositories.</p>
+        )}
+        {workspaces.length === 0 && myRepos.length === 0 && !isSuperAdmin && (
           <p className="text-muted">No workspaces yet. Workspaces can only be created by a super admin.</p>
         )}
         {isSuperAdmin && (
@@ -173,8 +204,8 @@ export default function Dashboard() {
           </button>
         )}
       </div>
-      {reposLoading ? (
-        <p className="text-muted">Loading repositories...</p>
+      {workspaceLoading ? (
+        <p className="text-muted">Loading...</p>
       ) : repos.length === 0 ? (
         <p className="text-muted">No repositories yet. Create one to get started.</p>
       ) : (

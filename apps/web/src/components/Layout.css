@@ -214,6 +214,18 @@
   margin: 0;
 }
 
+.sidebar-list button .sidebar-repo-name {
+  display: block;
+  font-weight: 500;
+}
+
+.sidebar-list button .sidebar-repo-workspace {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
 .sidebar-action-btn {
   width: 100%;
   padding: 0.4rem 0.75rem;

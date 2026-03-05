@@ -12,7 +12,12 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     next();
     return;
   }
-  res.status(401).json({ error: 'Unauthorized', message: 'Valid JWT required' });
+  const authHeader = req.headers.authorization;
+  const hasToken = authHeader?.startsWith('Bearer ') && authHeader.length > 10;
+  const message = hasToken
+    ? 'Session expired or invalid. Please sign in again.'
+    : 'Authentication required. Please sign in.';
+  res.status(401).json({ error: 'Unauthorized', message });
 }
 
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {

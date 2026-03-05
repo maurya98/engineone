@@ -13,6 +13,8 @@ export interface User {
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+  sessionExpired: boolean;
+  clearSessionExpired: () => void;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -30,6 +32,7 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const refreshUser = useCallback(async () => {
     const token = getToken();
@@ -39,11 +42,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const data = await apiFetch<{ user: User }>('/users/me');
+      const data = await apiFetch<{ user: User }>('/users/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setUser(data.user);
+      setSessionExpired(false);
     } catch {
       clearToken();
       setUser(null);
+      setSessionExpired(true);
     } finally {
       setLoading(false);
     }
@@ -56,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setAuth = useCallback((user: User, token: string) => {
     setToken(token);
     setUser(user);
+    setSessionExpired(false);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -65,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     setToken(data.token);
     setUser(data.user);
+    setSessionExpired(false);
   }, []);
 
   const logout = useCallback(async () => {
@@ -75,10 +84,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     clearToken();
     setUser(null);
+    setSessionExpired(false);
+  }, []);
+
+  const clearSessionExpired = useCallback(() => {
+    setSessionExpired(false);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, setAuth }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        sessionExpired,
+        clearSessionExpired,
+        login,
+        logout,
+        refreshUser,
+        setAuth,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

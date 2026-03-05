@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../../lib/api';
 import { Modal } from '../Modal';
@@ -32,11 +32,7 @@ const ROLE_OPTIONS = [
   { value: 'maintainer', label: 'Maintainer' },
 ];
 
-function isValidUuid(s: string): boolean {
-  const u =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return u.test(s.trim());
-}
+type AvailableUser = { id: string; email: string; display_name: string | null };
 
 export default function SettingsTab({ repoId, repo, onRepoUpdate }: SettingsTabProps) {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -54,6 +50,11 @@ export default function SettingsTab({ repoId, repo, onRepoUpdate }: SettingsTabP
   const [addRole, setAddRole] = useState<'maintainer' | 'developer' | 'qa'>('developer');
   const [addError, setAddError] = useState<string | null>(null);
   const [addSubmitting, setAddSubmitting] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
+  const [availableUsersLoading, setAvailableUsersLoading] = useState(false);
+  const [addMemberSearch, setAddMemberSearch] = useState('');
+  const [addMemberDropdownOpen, setAddMemberDropdownOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AvailableUser | null>(null);
 
   const [removeUserId, setRemoveUserId] = useState<string | null>(null);
 
@@ -75,6 +76,20 @@ export default function SettingsTab({ repoId, repo, onRepoUpdate }: SettingsTabP
     }
   }, [repoId]);
 
+  const loadAvailableUsers = useCallback(async (search?: string) => {
+    setAvailableUsersLoading(true);
+    try {
+      const q = search?.trim() || undefined;
+      const url = q ? `/repos/${repoId}/members/available?q=${encodeURIComponent(q)}` : `/repos/${repoId}/members/available`;
+      const data = await apiFetch<{ users: AvailableUser[] }>(url);
+      setAvailableUsers(data.users || []);
+    } catch {
+      setAvailableUsers([]);
+    } finally {
+      setAvailableUsersLoading(false);
+    }
+  }, [repoId]);
+
   const loadBranches = useCallback(async () => {
     try {
       const data = await apiFetch<{ branches: BranchItem[] }>(
@@ -93,8 +108,9 @@ export default function SettingsTab({ repoId, repo, onRepoUpdate }: SettingsTabP
   useEffect(() => {
     if (isMaintainer) {
       loadBranches();
+      loadAvailableUsers();
     }
-  }, [isMaintainer, loadBranches]);
+  }, [isMaintainer, loadBranches, loadAvailableUsers]);
 
   useEffect(() => {
     setName(repo.name);
@@ -134,30 +150,45 @@ export default function SettingsTab({ repoId, repo, onRepoUpdate }: SettingsTabP
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddError(null);
-    const uid = addUserId.trim();
-    if (!uid) {
-      setAddError('User ID is required');
-      return;
-    }
-    if (!isValidUuid(uid)) {
-      setAddError('Enter a valid UUID (e.g. from workspace or user list)');
+    if (!selectedUser) {
+      setAddError('Select a user to add');
       return;
     }
     setAddSubmitting(true);
     try {
       await apiFetch(`/repos/${repoId}/members`, {
         method: 'POST',
-        body: JSON.stringify({ user_id: uid, role: addRole }),
+        body: JSON.stringify({ user_id: selectedUser.id, role: addRole }),
       });
-      setAddUserId('');
+      setAddMemberSearch('');
+      setSelectedUser(null);
+      setAddMemberDropdownOpen(false);
       setAddRole('developer');
       loadMembers();
+      loadAvailableUsers();
     } catch (err) {
       setAddError(err instanceof Error ? err.message : 'Failed to add member');
     } finally {
       setAddSubmitting(false);
     }
   };
+
+  const handleSearchChange = (value: string) => {
+    setAddMemberSearch(value);
+    setSelectedUser(null);
+    setAddMemberDropdownOpen(true);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = window.setTimeout(() => {
+      loadAvailableUsers(value.trim() || undefined);
+    }, 200);
+  };
+
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, []);
 
   const handleRemoveMember = async (userId: string) => {
     setAddError(null);
@@ -307,20 +338,59 @@ export default function SettingsTab({ repoId, repo, onRepoUpdate }: SettingsTabP
               )}
             </ul>
             <form onSubmit={handleAddMember} className="settings-form settings-add-member">
-              <label htmlFor="settings-add-user-id">Add member by User ID (UUID)</label>
+              <label htmlFor="settings-add-user-search">Add member by email</label>
               <div className="settings-add-member-row">
-                <input
-                  id="settings-add-user-id"
-                  type="text"
-                  value={addUserId}
-                  onChange={(e) => {
-                    setAddUserId(e.target.value);
-                    setAddError(null);
-                  }}
-                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  disabled={addSubmitting}
-                  className="settings-input"
-                />
+                <div className="settings-user-search-wrap">
+                  <input
+                    id="settings-add-user-search"
+                    type="text"
+                    value={selectedUser ? `${selectedUser.email}${selectedUser.display_name ? ` (${selectedUser.display_name})` : ''}` : addMemberSearch}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    onFocus={() => {
+                      setAddMemberDropdownOpen(true);
+                      if (selectedUser) {
+                        setSelectedUser(null);
+                        setAddMemberSearch('');
+                        loadAvailableUsers();
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setAddMemberDropdownOpen(false), 150)}
+                    placeholder="Search by email or name…"
+                    disabled={addSubmitting}
+                    className="settings-input"
+                    autoComplete="off"
+                  />
+                  {addMemberDropdownOpen && (
+                    <ul className="settings-user-search-dropdown" role="listbox">
+                      {availableUsersLoading ? (
+                        <li className="settings-user-search-item settings-user-search-empty">Loading…</li>
+                      ) : availableUsers.length === 0 ? (
+                        <li className="settings-user-search-item settings-user-search-empty">
+                          {addMemberSearch.trim() ? 'No matching users' : 'No users to add (all users are already in this repo)'}
+                        </li>
+                      ) : (
+                        availableUsers.map((u) => (
+                          <li
+                            key={u.id}
+                            role="option"
+                            className="settings-user-search-item"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setSelectedUser(u);
+                              setAddMemberSearch('');
+                              setAddMemberDropdownOpen(false);
+                            }}
+                          >
+                            <span className="settings-user-search-email">{u.email}</span>
+                            {u.display_name && (
+                              <span className="settings-user-search-name">{u.display_name}</span>
+                            )}
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  )}
+                </div>
                 <select
                   value={addRole}
                   onChange={(e) =>
@@ -339,7 +409,7 @@ export default function SettingsTab({ repoId, repo, onRepoUpdate }: SettingsTabP
                 <button
                   type="submit"
                   className="settings-btn-primary"
-                  disabled={addSubmitting}
+                  disabled={addSubmitting || !selectedUser}
                 >
                   {addSubmitting ? 'Adding…' : 'Add'}
                 </button>

@@ -6,6 +6,7 @@ import {
   updateUserProfile,
   updateUserPassword,
 } from '../services/user.service.js';
+import * as repoService from '../services/repo.service.js';
 import { prisma } from '../db/prisma.js';
 
 export const usersRouter = Router();
@@ -34,6 +35,16 @@ usersRouter.get('/me', async (req: Request, res: Response) => {
   }
   const { toSafeUser } = await import('../types/user.js');
   res.json({ user: toSafeUser(user) });
+});
+
+usersRouter.get('/me/repos', async (req: Request, res: Response) => {
+  const id = (req.user as { id: string })?.id;
+  if (!id) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  const repositories = await repoService.listRepositoriesForUser(id);
+  res.json({ repositories });
 });
 
 usersRouter.patch('/me', async (req: Request, res: Response) => {

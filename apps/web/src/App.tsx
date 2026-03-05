@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Preferences from './pages/Preferences';
+import AdminUsers from './pages/AdminUsers';
 import RepoPage from './pages/RepoPage';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider, ThemeProviderWithPrefs } from './context/ThemeContext';
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="workspaces/:workspaceId" element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
         <Route path="preferences" element={<Preferences />} />
+        <Route path="admin/users" element={<AdminUsers />} />
         <Route path="workspaces/:workspaceId/repos/:repoId/*" element={<RepoPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

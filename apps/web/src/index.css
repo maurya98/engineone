@@ -10,21 +10,33 @@
 }
 
 [data-theme='light'] {
-  --bg: #ffffff;
-  --bg-secondary: #f6f8fa;
-  --text: #1f2328;
-  --text-muted: #656d76;
-  --border: #d0d7de;
-  --accent: #0969da;
+  --bg: #f0eeeb;
+  --bg-secondary: #e6e4e0;
+  --text: #1c1917;
+  --text-muted: #57534e;
+  --border: #d6d3ce;
+  --accent: #0d9488;
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* Font size preference (set by ThemeContext from user preferences) */
+[data-font-size='small'] {
+  --base-font-size: 0.875rem;
+}
+[data-font-size='medium'] {
+  --base-font-size: 1rem;
+}
+[data-font-size='large'] {
+  --base-font-size: 1.125rem;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-size: var(--base-font-size, 1rem);
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;

@@ -77,6 +77,11 @@ export default function Layout() {
                   <button type="button" onClick={() => { navigate('/preferences'); setUserMenuOpen(false); }}>
                     Preferences
                   </button>
+                  {user?.role === 'super_admin' && (
+                    <button type="button" onClick={() => { navigate('/admin/users'); setUserMenuOpen(false); }}>
+                      User management
+                    </button>
+                  )}
                   <button type="button" onClick={handleLogout}>
                     Logout
                   </button>
@@ -110,6 +115,7 @@ function DashboardSidebar({
   user: { id: string; role: string } | null;
 }) {
   const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
+  const [myRepos, setMyRepos] = useState<{ id: string; name: string; workspace_id: string; workspace_name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const navigate = useNavigate();
@@ -121,16 +127,30 @@ function DashboardSidebar({
   const loadWorkspaces = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<{ workspaces: { id: string; name: string }[] }>('/workspaces');
-      let list = data.workspaces || [];
+      const [wsData, reposData] = await Promise.all([
+        apiFetch<{ workspaces: { id: string; name: string }[] }>('/workspaces'),
+        apiFetch<{ repositories: { id: string; name: string; workspace_id: string; workspace_name: string }[] }>('/users/me/repos').catch(() => ({ repositories: [] })),
+      ]);
+      let list = wsData.workspaces || [];
       if (searchQuery) {
         list = list.filter((w) =>
           w.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
       setWorkspaces(list);
+      const repos = reposData.repositories || [];
+      if (searchQuery) {
+        setMyRepos(repos.filter(
+          (r) =>
+            r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            r.workspace_name.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
+      } else {
+        setMyRepos(repos);
+      }
     } catch {
       setWorkspaces([]);
+      setMyRepos([]);
     } finally {
       setLoading(false);
     }
@@ -141,7 +161,9 @@ function DashboardSidebar({
   }, [searchQuery]);
 
   useEffect(() => {
-    const onWorkspacesChanged = () => loadWorkspaces();
+    const onWorkspacesChanged = () => {
+      loadWorkspaces();
+    };
     window.addEventListener(WORKSPACES_CHANGED, onWorkspacesChanged);
     return () => window.removeEventListener(WORKSPACES_CHANGED, onWorkspacesChanged);
   }, [searchQuery]);
@@ -166,49 +188,86 @@ function DashboardSidebar({
 
   return (
     <div className="sidebar-inner">
-      <h3 className="sidebar-title">Workspaces</h3>
-      {isSuperAdmin && (
-        <button
-          type="button"
-          className="sidebar-action-btn"
-          onClick={() => setShowCreateWorkspace(true)}
-        >
-          + New workspace
-        </button>
+      {workspaces.length > 0 && (
+        <>
+          <h3 className="sidebar-title">Workspaces</h3>
+          {isSuperAdmin && (
+            <button
+              type="button"
+              className="sidebar-action-btn"
+              onClick={() => navigate('/admin/users')}
+              style={{ marginBottom: '0.5rem' }}
+            >
+              User management
+            </button>
+          )}
+          {isSuperAdmin && (
+            <button
+              type="button"
+              className="sidebar-action-btn"
+              onClick={() => setShowCreateWorkspace(true)}
+            >
+              + New workspace
+            </button>
+          )}
+          {loading ? (
+            <p className="sidebar-muted">Loading...</p>
+          ) : (
+            <ul className="sidebar-list">
+              {workspaces.map((ws) => (
+                <li key={ws.id} className="sidebar-workspace-row">
+                  <button
+                    type="button"
+                    className={currentWorkspaceId === ws.id ? 'active' : ''}
+                    onClick={() => navigate(`/workspaces/${ws.id}`)}
+                  >
+                    {ws.name}
+                  </button>
+                  {isSuperAdmin && (
+                    <button
+                      type="button"
+                      className="sidebar-delete-workspace"
+                      title="Delete workspace"
+                      onClick={(e) => handleDeleteWorkspace(e, ws)}
+                      aria-label={`Delete workspace ${ws.name}`}
+                    >
+                      <DeleteIcon size={16} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
-      {loading ? (
-        <p className="sidebar-muted">Loading...</p>
-      ) : (
-        <ul className="sidebar-list">
-          {workspaces.map((ws) => (
-            <li key={ws.id} className="sidebar-workspace-row">
-              <button
-                type="button"
-                className={currentWorkspaceId === ws.id ? 'active' : ''}
-                onClick={() => navigate(`/workspaces/${ws.id}`)}
-              >
-                {ws.name}
-              </button>
-              {isSuperAdmin && (
+      {workspaces.length === 0 && myRepos.length > 0 && (
+        <>
+          <h3 className="sidebar-title">Your repositories</h3>
+          <ul className="sidebar-list">
+            {myRepos.map((r) => (
+              <li key={r.id}>
                 <button
                   type="button"
-                  className="sidebar-delete-workspace"
-                  title="Delete workspace"
-                  onClick={(e) => handleDeleteWorkspace(e, ws)}
-                  aria-label={`Delete workspace ${ws.name}`}
+                  className={currentWorkspaceId === r.workspace_id && location.pathname.includes(`/repos/${r.id}`) ? 'active' : ''}
+                  onClick={() => navigate(`/workspaces/${r.workspace_id}/repos/${r.id}`)}
                 >
-                  <DeleteIcon size={16} />
+                  <span className="sidebar-repo-name">{r.name}</span>
+                  <span className="sidebar-repo-workspace">{r.workspace_name}</span>
                 </button>
-              )}
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {workspaces.length === 0 && myRepos.length === 0 && !loading && (
+        <p className="sidebar-muted">No workspaces or repositories.</p>
       )}
       {showCreateWorkspace && (
         <CreateWorkspaceModal
           onClose={() => setShowCreateWorkspace(false)}
           onSuccess={() => {
             loadWorkspaces();
+            loadMyRepos();
             setShowCreateWorkspace(false);
           }}
         />

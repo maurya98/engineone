@@ -74,3 +74,56 @@ export async function getWorkspaceRole(
   if (!m) return null;
   return m.role as 'admin' | 'member';
 }
+
+/** True if user can see the workspace (workspace member or member of at least one repo in it). */
+export async function hasWorkspaceAccess(workspaceId: string, userId: string): Promise<boolean> {
+  const role = await getWorkspaceRole(workspaceId, userId);
+  if (role) return true;
+  const count = await prisma.repository.count({
+    where: {
+      workspaceId,
+      members: { some: { userId } },
+    },
+  });
+  return count > 0;
+}
+
+export async function listAllWorkspaces(): Promise<Workspace[]> {
+  const list = await prisma.workspace.findMany({
+    orderBy: { name: 'asc' },
+  });
+  return list.map(toWorkspace);
+}
+
+export async function addWorkspaceMember(
+  workspaceId: string,
+  userId: string,
+  role: 'admin' | 'member'
+): Promise<void> {
+  await prisma.workspaceMember.upsert({
+    where: { workspaceId_userId: { workspaceId, userId } },
+    create: { workspaceId, userId, role },
+    update: { role },
+  });
+}
+
+export async function updateWorkspaceMemberRole(
+  workspaceId: string,
+  userId: string,
+  role: 'admin' | 'member'
+): Promise<void> {
+  await prisma.workspaceMember.update({
+    where: { workspaceId_userId: { workspaceId, userId } },
+    data: { role },
+  });
+}
+
+export async function removeWorkspaceMember(
+  workspaceId: string,
+  userId: string
+): Promise<boolean> {
+  const result = await prisma.workspaceMember.deleteMany({
+    where: { workspaceId, userId },
+  });
+  return result.count > 0;
+}

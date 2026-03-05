@@ -106,6 +106,13 @@ reposRouter.get('/:id/members', requireRepoRole('maintainer'), async (req: Reque
   });
 });
 
+reposRouter.get('/:id/members/available', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
+  const repoId = param(req, 'id');
+  const q = typeof req.query.q === 'string' ? req.query.q : undefined;
+  const users = await repoService.listAvailableUsersForRepo(repoId, q);
+  res.json({ users });
+});
+
 reposRouter.post('/:id/members', requireRepoRole('maintainer'), async (req: Request, res: Response) => {
   const parsed = addMemberSchema.safeParse(req.body);
   if (!parsed.success) {

@@ -41,8 +41,9 @@ workspacesRouter.get('/:workspaceId', async (req: Request, res: Response) => {
     return;
   }
   const userId = (req.user as { id: string }).id;
-  const role = await workspaceService.getWorkspaceRole(ws.id, userId);
-  if (!role && (req.user as { role?: string }).role !== 'super_admin') {
+  const isSuperAdmin = (req.user as { role?: string }).role === 'super_admin';
+  const hasAccess = isSuperAdmin || (await workspaceService.hasWorkspaceAccess(ws.id, userId));
+  if (!hasAccess) {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
@@ -82,12 +83,17 @@ workspacesRouter.get('/:workspaceId/repos', async (req: Request, res: Response) 
     return;
   }
   const userId = (req.user as { id: string }).id;
-  const role = await workspaceService.getWorkspaceRole(ws.id, userId);
-  if (!role && (req.user as { role?: string }).role !== 'super_admin') {
+  const isSuperAdmin = (req.user as { role?: string }).role === 'super_admin';
+  const workspaceRole = await workspaceService.getWorkspaceRole(ws.id, userId);
+  const hasAccess = isSuperAdmin || workspaceRole || (await workspaceService.hasWorkspaceAccess(ws.id, userId));
+  if (!hasAccess) {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
-  const repos = await repoService.listRepositoriesByWorkspace(ws.id);
+  const repos =
+    isSuperAdmin || workspaceRole
+      ? await repoService.listRepositoriesByWorkspace(ws.id)
+      : await repoService.listRepositoriesInWorkspaceForUser(ws.id, userId);
   res.json({ repositories: repos });
 });
 

@@ -59,6 +59,7 @@ All routes require authentication.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/users/me` | Get current user profile. |
+| GET | `/users/me/repos` | List repositories the current user is a member of (for "Your repositories"). |
 | PATCH | `/users/me` | Update profile (`display_name`). |
 | POST | `/users/me/change-password` | Change password. |
 | GET | `/users/me/preferences` | Get user preferences (theme, font_size, font_style, icon_pack). |
@@ -67,6 +68,10 @@ All routes require authentication.
 ### PATCH `/users/me`
 
 **Request body:** `{ "display_name": "New Name" }` (optional, nullable).
+
+### GET `/users/me/repos`
+
+**Response:** `200` with `{ repositories: [{ id, name, workspace_id, workspace_name, default_branch_name }] }`. Lists all repositories the current user is a member of (via repo membership). Used for "Your repositories" when the user has no workspace membership.
 
 ### POST `/users/me/change-password`
 
@@ -325,11 +330,25 @@ Used to run a decision graph in "simulation" mode (e.g. from the JDM editor) wit
 
 ## Roles summary
 
-| Role | Scope | Capabilities |
-|------|--------|----------------|
-| super_admin | Global | All workspaces/repos; create/delete workspaces. |
-| admin | Workspace | Workspace settings; treat as maintainer on all repos. |
-| member | Workspace | List repos; access by repo role. |
-| maintainer | Repo | Settings, members, branches, commits, merge, wiki delete, protected branch. |
-| developer | Repo | VCS read/write, create branches/commits, wiki edit, MRs. |
-| qa | Repo | Read repo, tree, files; issues; wiki read. |
+**Global user roles** (on the User account; set in User management by super_admin):
+
+| Role | Description |
+|------|-------------|
+| super_admin | Full platform access: all workspaces/repos; create/delete workspaces; user management. |
+| admin | Platform admin (e.g. workspace-level admin capabilities; exact scope is configurable). |
+| user | Standard user; access only via workspace and repository membership. |
+
+**Workspace roles** (per workspace membership):
+
+| Role | Capabilities |
+|------|--------------|
+| admin | Workspace settings; treat as maintainer on all repos in the workspace. |
+| member | List repos; access by repo role. |
+
+**Repository roles** (per repo membership):
+
+| Role | Capabilities |
+|------|--------------|
+| maintainer | Settings, members, branches, commits, merge, wiki delete, protected branch. |
+| developer | VCS read/write, create branches/commits, wiki edit, MRs. |
+| qa | Read repo, tree, files; issues; wiki read. |

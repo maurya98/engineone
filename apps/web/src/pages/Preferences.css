@@ -1,39 +1,163 @@
-.preferences-page h1 {
-  margin: 0 0 1rem;
+.preferences-page {
+  max-width: 520px;
+  padding: 0 1rem 2rem;
 }
 
-.preferences-form {
-  max-width: 400px;
+.preferences-page h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.preferences-intro {
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+}
+
+.preferences-loading {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem;
+  border-radius: 10px;
+  padding: 2rem;
+  text-align: center;
 }
 
-.preferences-form label {
+.preferences-loading-bar {
+  width: 120px;
+  height: 4px;
+  margin: 0 auto 1rem;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.preferences-loading-bar::after {
+  content: '';
   display: block;
-  margin-bottom: 1rem;
+  width: 40%;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: preferences-loading 0.8s ease-in-out infinite;
+}
+
+@keyframes preferences-loading {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(90px); }
+}
+
+.preferences-loading p {
+  margin: 0;
   font-size: 0.875rem;
   color: var(--text-muted);
 }
 
-.preferences-form select,
-.preferences-form input {
+.preferences-form {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem 1.5rem 1.25rem;
+}
+
+.preferences-error {
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: rgba(220, 53, 69, 0.12);
+  border: 1px solid rgba(220, 53, 69, 0.35);
+  border-radius: 6px;
+}
+
+.preferences-section {
+  margin-bottom: 1.25rem;
+}
+
+.preferences-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.preferences-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.preferences-field {
+  margin-bottom: 1rem;
+}
+
+.preferences-field:last-child {
+  margin-bottom: 0;
+}
+
+.preferences-field label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.preferences-field select,
+.preferences-field input {
   display: block;
   width: 100%;
-  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
   color: var(--text);
+  font-size: 0.9375rem;
 }
 
-.preferences-form button {
-  margin-top: 0.5rem;
-  padding: 0.5rem 1rem;
+.preferences-field select:focus,
+.preferences-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+.preferences-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.preferences-actions {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.preferences-submit {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
   background: var(--accent);
   border: none;
   border-radius: 6px;
-  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.preferences-submit:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.preferences-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.preferences-submit:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
