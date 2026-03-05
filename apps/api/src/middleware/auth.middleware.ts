@@ -3,17 +3,21 @@ import { getWorkspaceRole } from '../services/workspace.service.js';
 import { getRepositoryById, getRepoRole } from '../services/repo.service.js';
 import { param } from '../utils/param.js';
 
+/**
+ * Requires a valid JWT to have been verified (req.user set by jwtAuth middleware).
+ * Use after jwtAuth on protected routes.
+ */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  if (req.isAuthenticated?.() && req.user) {
+  if (req.user) {
     next();
     return;
   }
-  res.status(401).json({ error: 'Unauthorized' });
+  res.status(401).json({ error: 'Unauthorized', message: 'Valid JWT required' });
 }
 
 export function requireSuperAdmin(req: Request, res: Response, next: NextFunction): void {
-  if (!req.isAuthenticated?.() || !req.user) {
-    res.status(401).json({ error: 'Unauthorized' });
+  if (!req.user) {
+    res.status(401).json({ error: 'Unauthorized', message: 'Valid JWT required' });
     return;
   }
   if ((req.user as { role?: string }).role !== 'super_admin') {

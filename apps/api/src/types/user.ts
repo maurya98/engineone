@@ -19,6 +19,15 @@ export interface UserSafe {
   created_at: string;
 }
 
+/** JWT payload (claims) stored in the token; must match UserSafe shape. */
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+  display_name: string | null;
+  created_at: string;
+}
+
 export function toSafeUser(u: User): UserSafe {
   return {
     id: u.id,

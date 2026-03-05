@@ -1,10 +1,9 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import session from 'express-session';
-import { createClient } from 'redis';
 import passport from 'passport';
 import { config } from './config.js';
+import { jwtAuth } from './middleware/jwt.middleware.js';
 import './config/passport.js';
 import { authRouter } from './routes/auth.routes.js';
 import { usersRouter } from './routes/users.routes.js';
@@ -19,32 +18,9 @@ export async function createApp() {
   app.use(cookieParser());
   app.use(express.json());
 
-  let sessionStore: session.Store;
-  try {
-    const redisClient = createClient({ url: config.redis.url });
-    await redisClient.connect();
-    const RedisStoreClass = (await import('connect-redis')).default as any;
-    sessionStore = new RedisStoreClass({ client: redisClient });
-  } catch {
-    console.warn('Redis not available, using memory session store');
-    sessionStore = new session.MemoryStore();
-  }
-
-  app.use(
-    session({
-      store: sessionStore,
-      secret: config.sessionSecret,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: config.nodeEnv === 'production',
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      },
-    })
-  );
   app.use(passport.initialize());
-  app.use(passport.session());
+  // JWT-only auth: verify Bearer token and set req.user on protected routes
+  app.use(jwtAuth);
 
   app.use('/auth', authRouter);
   app.use('/users', usersRouter);

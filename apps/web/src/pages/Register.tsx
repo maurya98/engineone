@@ -5,7 +5,7 @@ import { apiFetch } from '../lib/api';
 import './Login.css';
 
 export default function Register() {
-  const { user } = useAuth();
+  const { user, setAuth } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,10 +20,14 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      await apiFetch('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ email, password, display_name: displayName || undefined }),
-      });
+      const data = await apiFetch<{ user: { id: string; email: string; role: string; display_name: string | null; created_at: string }; token: string }>(
+        '/auth/register',
+        {
+          method: 'POST',
+          body: JSON.stringify({ email, password, display_name: displayName || undefined }),
+        }
+      );
+      setAuth(data.user, data.token);
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');

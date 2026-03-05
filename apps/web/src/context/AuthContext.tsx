@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getToken, setToken, clearToken } from '../lib/authToken';
 
 export interface User {
   id: string;
@@ -14,6 +15,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  setAuth: (user: User, token: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -29,15 +31,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     try {
-      const res = await fetch('/users/me', { credentials: 'include' });
+      const res = await fetch('/users/me', {
+        credentials: 'include',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
       } else {
+        clearToken();
         setUser(null);
       }
     } catch {
+      clearToken();
       setUser(null);
     } finally {
       setLoading(false);
@@ -47,6 +60,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
+
+  const setAuth = useCallback((user: User, token: string) => {
+    setToken(token);
+    setUser(user);
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await fetch('/auth/login', {
@@ -60,16 +78,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(err.error || 'Login failed');
     }
     const data = await res.json();
+    setToken(data.token);
     setUser(data.user);
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+    const token = getToken();
+    if (token) {
+      try {
+        await fetch('/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {
+        // ignore
+      }
+    }
+    clearToken();
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, setAuth }}>
       {children}
     </AuthContext.Provider>
   );

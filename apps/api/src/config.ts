@@ -16,4 +16,8 @@ export const config = {
     email: process.env.SUPERADMIN_EMAIL || 'admin@engineone.local',
     password: process.env.SUPERADMIN_PASSWORD || 'SuperAdmin1!',
   },
+  jwt: {
+    secret: process.env.JWT_SECRET || process.env.SESSION_SECRET || 'change-me-in-production',
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  },
 } as const;

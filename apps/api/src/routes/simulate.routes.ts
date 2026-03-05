@@ -10,9 +10,7 @@ const simulateSchema = z.object({
   decisions: z.record(z.string(), z.record(z.string(), z.unknown())).optional(), // key -> JDM graph for decision nodes
 });
 
-simulateRouter.post('/', 
-  // requireAuth, 
-  async (req: Request, res: Response) => {
+simulateRouter.post('/', requireAuth, async (req: Request, res: Response) => {
   const parsed = simulateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() });

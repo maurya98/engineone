@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getToken } from '../lib/authToken';
 
 type ThemePreference = 'light' | 'dark' | 'system';
 type EffectiveTheme = 'light' | 'dark';
@@ -68,7 +69,11 @@ export function ThemeProviderWithPrefs({ children }: { children: React.ReactNode
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/users/me/preferences', { credentials: 'include' })
+    const token = getToken();
+    fetch('/users/me/preferences', {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled) return;

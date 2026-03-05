@@ -3,6 +3,7 @@ import { z } from 'zod';
 import passport from 'passport';
 import { createUser, findUserByEmail } from '../services/user.service.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
+import { signToken } from '../utils/jwt.js';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -31,13 +32,8 @@ authRouter.post('/register', async (req: Request, res: Response) => {
   }
   try {
     const user = await createUser({ email, password, display_name });
-    req.login(user, (err) => {
-      if (err) {
-        res.status(500).json({ error: 'Session error' });
-        return;
-      }
-      res.status(201).json({ user });
-    });
+    const token = signToken(user);
+    res.status(201).json({ user, token });
   } catch (e) {
     res.status(500).json({ error: 'Registration failed' });
   }
@@ -53,17 +49,17 @@ authRouter.post(
     }
     next();
   },
-  passport.authenticate('local', { session: true }),
+  passport.authenticate('local', { session: false }),
   (req: Request, res: Response) => {
-    res.json({ user: req.user });
+    const user = req.user!;
+    const token = signToken(user);
+    res.json({ user, token });
   }
 );
 
-authRouter.post('/logout', requireAuth, (req: Request, res: Response) => {
-  req.logout((err) => {
-    if (err) res.status(500).json({ error: 'Logout failed' });
-    else res.json({ ok: true });
-  });
+authRouter.post('/logout', requireAuth, (_req: Request, res: Response) => {
+  // JWT is stateless; client discards token. Acknowledge for consistency.
+  res.json({ ok: true });
 });
 
 // SAML stub: return 501 until implemented

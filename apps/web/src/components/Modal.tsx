@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { getToken } from '../lib/authToken';
 import './Modal.css';
 
 interface ModalProps {
@@ -57,10 +58,14 @@ export function CreateWorkspaceModal({ onClose, onSuccess }: CreateWorkspaceModa
     }
     setSubmitting(true);
     try {
+      const token = getToken();
       const res = await fetch('/workspaces', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ name: trimmed }),
       });
       const data = await res.json().catch(() => ({}));
@@ -132,10 +137,14 @@ export function CreateRepoModal({
     }
     setSubmitting(true);
     try {
+      const token = getToken();
       const res = await fetch(`/workspaces/${workspaceId}/repos`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ name: trimmed }),
       });
       const data = await res.json().catch(() => ({}));
