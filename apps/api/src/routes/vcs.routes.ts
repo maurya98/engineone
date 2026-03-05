@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth, requireRepoRole } from '../middleware/auth.middleware.js';
 import * as vcsService from '../services/vcs.service.js';
 import * as blobService from '../services/blob.service.js';
+import * as repoService from '../services/repo.service.js';
 import { prisma } from '../db/prisma.js';
 import { param } from '../utils/param.js';
 
@@ -75,7 +76,7 @@ vcsRouter.post('/commits', requireRepoRole('maintainer'), async (req: Request, r
     return;
   }
   if (branch.is_protected) {
-    const role = await require('../services/repo.service.js').getRepoRole(repoId, userId);
+    const role = await repoService.getRepoRole(repoId, userId);
     if (role !== 'maintainer' && (req.user as { role?: string }).role !== 'super_admin') {
       res.status(403).json({ error: 'Protected branch: maintainer only' });
       return;
@@ -144,6 +145,14 @@ vcsRouter.post('/branches', async (req: Request, res: Response) => {
     res.status(404).json({ error: 'Source branch not found' });
     return;
   }
+  const sourceHeadCommitId = sourceBranch.head_commit_id ?? null;
+  if (!sourceHeadCommitId) {
+    res.status(400).json({
+      error: 'Source branch has no commits',
+      message: 'Create at least one commit on the source branch before creating a new branch from it.',
+    });
+    return;
+  }
   const existing = await vcsService.getBranchByName(repoId, parsed.data.name);
   if (existing) {
     res.status(409).json({ error: 'Branch already exists' });
@@ -152,7 +161,7 @@ vcsRouter.post('/branches', async (req: Request, res: Response) => {
   const branch = await vcsService.createBranch({
     repoId,
     name: parsed.data.name,
-    headCommitId: sourceBranch.head_commit_id,
+    headCommitId: sourceHeadCommitId,
     isProtected: false,
   });
   res.status(201).json({ branch });

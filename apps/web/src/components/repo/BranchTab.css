@@ -1,0 +1,269 @@
+.branch-tab {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.branch-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.branch-btn-primary {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.branch-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.branch-btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.branch-btn-secondary {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.branch-btn-secondary:hover:not(:disabled) {
+  background: var(--bg);
+}
+
+.branch-btn-danger {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid #f85149;
+  color: #f85149;
+  cursor: pointer;
+}
+
+.branch-btn-danger:hover:not(:disabled) {
+  background: rgba(248, 81, 73, 0.15);
+}
+
+.branch-btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.branch-btn-icon:hover {
+  color: var(--text);
+}
+
+.branch-loading {
+  color: var(--text-muted);
+  padding: 2rem;
+}
+
+.branch-list-layout {
+  display: flex;
+  gap: 1.5rem;
+  min-height: 0;
+  flex: 1;
+}
+
+.branch-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+}
+
+.branch-empty {
+  padding: 2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.branch-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.branch-list-item:last-child {
+  border-bottom: none;
+}
+
+.branch-list-item:hover {
+  background: var(--bg);
+}
+
+.branch-list-item.selected {
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  padding-left: calc(1rem - 3px);
+}
+
+.branch-item-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.branch-item-name {
+  display: block;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.branch-item-meta {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.branch-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  margin-right: 0.25rem;
+}
+
+.branch-badge-default {
+  background: rgba(56, 139, 253, 0.2);
+  color: var(--accent);
+}
+
+.branch-badge-protected {
+  background: rgba(210, 153, 34, 0.2);
+  color: #d49922;
+}
+
+.branch-detail-panel {
+  width: 100%;
+  max-width: 420px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  padding: 1rem;
+  overflow: auto;
+}
+
+.branch-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.branch-detail-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.branch-detail-body {
+  font-size: 0.875rem;
+}
+
+.branch-detail-meta {
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+}
+
+.branch-detail-actions {
+  margin-top: 1rem;
+}
+
+.branch-detail-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.branch-detail-toggle input {
+  width: auto;
+}
+
+.branch-error {
+  color: #f85149;
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+.branch-modal-form label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  margin-top: 0.75rem;
+}
+
+.branch-modal-form label:first-of-type {
+  margin-top: 0;
+}
+
+.branch-input,
+.branch-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.branch-select {
+  min-width: 0;
+}
+
+.branch-input:focus,
+.branch-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.branch-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.branch-delete-message {
+  margin: 0 0 1rem;
+  color: var(--text);
+}
+
+.branch-delete-message strong {
+  font-weight: 600;
+}

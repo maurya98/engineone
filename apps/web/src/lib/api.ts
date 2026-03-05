@@ -18,8 +18,8 @@ export async function apiFetch<T>(
     headers,
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err as { error?: string }).error || res.statusText);
+    const err = await res.json().catch(() => ({})) as { error?: string; message?: string };
+    throw new Error(err.message || err.error || res.statusText);
   }
   return res.json();
 }
