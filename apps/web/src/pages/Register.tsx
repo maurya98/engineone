@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../lib/api';
+import { COMPANY_NAME } from '../config';
 import './Login.css';
 
 export default function Register() {
@@ -39,7 +40,7 @@ export default function Register() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1>EngineOne</h1>
+        <h1>{COMPANY_NAME}</h1>
         <p className="login-subtitle">Create an account</p>
         <form onSubmit={handleSubmit}>
           {error && <div className="login-error">{error}</div>}

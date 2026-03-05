@@ -1,7 +1,8 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   z-index: 1000;
 }
 
@@ -12,44 +13,46 @@
   transform: translate(-50%, -50%);
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  min-width: 320px;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  min-width: 340px;
   max-width: 90vw;
   z-index: 1001;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-title {
-  margin: 0 0 1rem;
+  margin: 0 0 1.25rem;
   font-size: 1.125rem;
   font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .modal-form label {
   display: block;
   font-size: 0.875rem;
-  color: var(--text-muted);
-  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.35rem;
 }
 
 .modal-form input {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.875rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--text);
   margin-bottom: 1rem;
 }
 
 .modal-form input:focus {
-  outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
 }
 
 .modal-error {
-  color: #f85149;
+  color: var(--danger);
   font-size: 0.875rem;
   margin: -0.5rem 0 0.75rem;
 }
@@ -58,12 +61,14 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .modal-btn {
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-weight: 500;
+  font-size: 0.9375rem;
 }
 
 .modal-btn.secondary {
@@ -83,7 +88,8 @@
 }
 
 .modal-btn.primary:hover:not(:disabled) {
-  filter: brightness(1.1);
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .modal-btn.primary:disabled {
@@ -92,13 +98,13 @@
 }
 
 .modal-btn.danger {
-  background: #f85149;
+  background: var(--danger);
   border: none;
   color: #fff;
 }
 
 .modal-btn.danger:hover:not(:disabled) {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
 }
 
 .modal-btn.danger:disabled {

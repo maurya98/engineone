@@ -50,43 +50,67 @@ export default function Profile() {
   return (
     <div className="profile-page">
       <h1>Profile</h1>
-      <section className="profile-section">
-        <h2>Profile</h2>
+      <p className="profile-intro">Manage your account details and security.</p>
+
+      <section className="profile-section" aria-labelledby="profile-details-heading">
+        <h2 id="profile-details-heading">Profile details</h2>
         <form onSubmit={handleSaveProfile}>
-          {error && <div className="form-error">{error}</div>}
-          <label>
-            Email (read-only)
-            <input type="text" value={user?.email ?? ''} readOnly disabled />
-          </label>
-          <label>
-            Display name
+          {error && <div className="form-error" role="alert">{error}</div>}
+          <div className="profile-field">
+            <label htmlFor="profile-email">Email</label>
             <input
+              id="profile-email"
+              type="text"
+              value={user?.email ?? ''}
+              readOnly
+              disabled
+              aria-describedby="profile-email-hint"
+            />
+            <span id="profile-email-hint" className="profile-hint">Email cannot be changed.</span>
+          </div>
+          <div className="profile-field">
+            <label htmlFor="profile-display-name">Display name</label>
+            <input
+              id="profile-display-name"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Your name"
+              autoComplete="name"
             />
-          </label>
-          <button type="submit">{saved ? 'Saved!' : 'Save'}</button>
+          </div>
+          <div className="profile-actions">
+            <button
+              type="submit"
+              className={saved ? 'saved' : ''}
+            >
+              {saved ? 'Saved!' : 'Save changes'}
+            </button>
+          </div>
         </form>
       </section>
-      <section className="profile-section">
-        <h2>Change password</h2>
+
+      <section className="profile-section" aria-labelledby="profile-password-heading">
+        <h2 id="profile-password-heading">Change password</h2>
         <form onSubmit={handleChangePassword}>
-          {pwError && <div className="form-error">{pwError}</div>}
-          <label>
-            Current password
+          {pwError && <div className="form-error" role="alert">{pwError}</div>}
+          <div className="profile-field">
+            <label htmlFor="profile-current-password">Current password</label>
             <input
+              id="profile-current-password"
               type="password"
               value={changePassword.current}
               onChange={(e) =>
                 setChangePassword((p) => ({ ...p, current: e.target.value }))
               }
               required
+              autoComplete="current-password"
             />
-          </label>
-          <label>
-            New password
+          </div>
+          <div className="profile-field">
+            <label htmlFor="profile-new-password">New password</label>
             <input
+              id="profile-new-password"
               type="password"
               value={changePassword.new}
               onChange={(e) =>
@@ -94,9 +118,18 @@ export default function Profile() {
               }
               required
               minLength={8}
+              autoComplete="new-password"
+              placeholder="At least 8 characters"
             />
-          </label>
-          <button type="submit">{pwSaved ? 'Password updated!' : 'Change password'}</button>
+          </div>
+          <div className="profile-actions">
+            <button
+              type="submit"
+              className={pwSaved ? 'saved' : ''}
+            >
+              {pwSaved ? 'Password updated!' : 'Change password'}
+            </button>
+          </div>
         </form>
       </section>
     </div>

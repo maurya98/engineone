@@ -5,6 +5,7 @@ import { CreateWorkspaceModal } from './Modal';
 import { DeleteIcon } from './icons/DeleteIcon';
 import { WORKSPACES_CHANGED, emitWorkspacesChanged } from '../lib/events';
 import { apiFetch } from '../lib/api';
+import { COMPANY_NAME } from '../config';
 import './Layout.css';
 
 export default function Layout() {
@@ -37,10 +38,12 @@ export default function Layout() {
           onClick={() => setSidebarOpen((o) => !o)}
           style={isRepoPage ? { display: 'none' } : undefined}
         >
-          ☰
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
         <a href="/" className="navbar-brand">
-          EngineOne
+          {COMPANY_NAME}
         </a>
         {showSearch && (
           <div className="navbar-search">

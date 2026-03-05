@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
 import { useTheme } from '../context/ThemeContext';
+import { COMPANY_NAME } from '../config';
 import './Preferences.css';
 
 interface Prefs {
@@ -95,8 +96,8 @@ export default function Preferences() {
     return (
       <div className="preferences-page">
         <h1>Preferences</h1>
+        <p className="preferences-intro">Manage how {COMPANY_NAME} looks and behaves for you.</p>
         <div className="preferences-loading" aria-busy="true">
-          <div className="preferences-loading-bar" />
           <p>Loading preferences…</p>
         </div>
       </div>
@@ -106,7 +107,7 @@ export default function Preferences() {
   return (
     <div className="preferences-page">
       <h1>Preferences</h1>
-      <p className="preferences-intro">Manage how EngineOne looks and behaves for you.</p>
+      <p className="preferences-intro">Manage how {COMPANY_NAME} looks and behaves for you.</p>
 
       <form onSubmit={handleSave} className="preferences-form">
         {error && (
@@ -184,7 +185,11 @@ export default function Preferences() {
         </section>
 
         <div className="preferences-actions">
-          <button type="submit" disabled={saving} className="preferences-submit">
+          <button
+            type="submit"
+            disabled={saving}
+            className={`preferences-submit ${saved ? 'saved' : ''}`}
+          >
             {saving ? 'Saving…' : saved ? 'Saved!' : 'Save preferences'}
           </button>
         </div>

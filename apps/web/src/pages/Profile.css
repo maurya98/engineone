@@ -1,57 +1,148 @@
+.profile-page {
+  width: 100%;
+  padding: 0 0 2rem;
+  max-width: 560px;
+}
+
 .profile-page h1 {
-  margin: 0 0 1rem;
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.profile-intro {
+  margin: 0 0 1.75rem;
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .profile-section {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
   margin-bottom: 1.5rem;
-  max-width: 400px;
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-section:last-child {
+  margin-bottom: 0;
 }
 
 .profile-section h2 {
-  margin: 0 0 1rem;
+  margin: 0 0 1.25rem;
   font-size: 1rem;
-  color: var(--text-muted);
-}
-
-.profile-section label {
-  display: block;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.profile-section input {
-  display: block;
-  width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
 
-.profile-section input:disabled {
-  opacity: 0.7;
+.profile-section form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-.profile-section button {
-  padding: 0.5rem 1rem;
+.profile-field {
+  margin-bottom: 1.25rem;
+}
+
+.profile-field:last-of-type {
+  margin-bottom: 1.25rem;
+}
+
+.profile-section .profile-actions {
+  margin-bottom: 0;
+}
+
+.profile-field label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.profile-field input {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9375rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.profile-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+  outline: none;
+}
+
+.profile-field input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.profile-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.profile-actions {
+  margin-top: 0.25rem;
+}
+
+.profile-section button[type='submit'] {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #fff;
   background: var(--accent);
   border: none;
-  border-radius: 6px;
-  color: #fff;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition), box-shadow var(--transition);
+}
+
+.profile-section button[type='submit']:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-section button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.profile-section button[type='submit'].saved {
+  background: var(--success);
+}
+
+.profile-section button[type='submit'].saved:hover {
+  background: var(--success);
 }
 
 .form-error {
-  background: rgba(248, 81, 73, 0.15);
-  color: #f85149;
-  padding: 0.5rem;
-  border-radius: 6px;
   margin-bottom: 1rem;
+  padding: 0.65rem 1rem;
   font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--danger);
+  background: var(--danger-muted);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 640px) {
+  .profile-section {
+    padding: 1.25rem;
+  }
 }

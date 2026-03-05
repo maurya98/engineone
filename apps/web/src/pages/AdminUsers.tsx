@@ -260,7 +260,10 @@ export default function AdminUsers() {
     return (
       <div className="admin-users-page">
         <h1>User management</h1>
-        <div className="admin-users-loading">Loading users…</div>
+        <p className="admin-users-intro">Manage global roles, workspace access, and repository access.</p>
+        <div className="admin-users-loading" aria-busy="true">
+          <p>Loading users…</p>
+        </div>
       </div>
     );
   }
@@ -276,10 +279,12 @@ export default function AdminUsers() {
 
   return (
     <div className="admin-users-page">
-      <h1>User management</h1>
-      <p className="admin-users-intro">
-        Manage global roles, workspace access, and repository access for all users.
-      </p>
+      <header className="admin-users-header">
+        <h1>User management</h1>
+        <p className="admin-users-intro">
+          Manage global roles, workspace access, and repository access for all users.
+        </p>
+      </header>
 
       <div className="admin-users-toolbar">
         <button
@@ -297,6 +302,18 @@ export default function AdminUsers() {
         </div>
       )}
 
+      {users.length === 0 ? (
+        <div className="admin-users-empty-state">
+          <p>No users yet. Add the first user to get started.</p>
+          <button
+            type="button"
+            className="admin-users-add-user-btn"
+            onClick={() => setShowAddUser(true)}
+          >
+            Add user
+          </button>
+        </div>
+      ) : (
       <div className="admin-users-table-wrap">
         <table className="admin-users-table">
           <thead>
@@ -431,6 +448,7 @@ export default function AdminUsers() {
           </tbody>
         </table>
       </div>
+      )}
 
       {addWorkspaceForUser && (
         <div

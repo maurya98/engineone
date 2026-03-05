@@ -1,95 +1,104 @@
 .preferences-page {
-  max-width: 520px;
-  padding: 0 1rem 2rem;
+  width: 100%;
+  padding: 0 0 2rem;
+  max-width: 640px;
 }
 
 .preferences-page h1 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.35rem;
   font-size: 1.5rem;
   font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
 
 .preferences-intro {
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.75rem;
   font-size: 0.9375rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Loading */
+.preferences-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 2rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   color: var(--text-muted);
 }
 
-.preferences-loading {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 2rem;
-  text-align: center;
-}
-
-.preferences-loading-bar {
-  width: 120px;
-  height: 4px;
-  margin: 0 auto 1rem;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.preferences-loading-bar::after {
+.preferences-loading::before {
   content: '';
-  display: block;
-  width: 40%;
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  animation: preferences-loading 0.8s ease-in-out infinite;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: preferences-spin 0.7s linear infinite;
 }
 
-@keyframes preferences-loading {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(90px); }
+@keyframes preferences-spin {
+  to { transform: rotate(360deg); }
 }
 
 .preferences-loading p {
   margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-muted);
+  font-size: 0.9375rem;
 }
 
+/* Form card */
 .preferences-form {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.5rem 1.5rem 1.25rem;
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .preferences-error {
-  margin-bottom: 1rem;
-  padding: 0.5rem 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.65rem 1rem;
   font-size: 0.875rem;
-  color: var(--text);
-  background: rgba(220, 53, 69, 0.12);
-  border: 1px solid rgba(220, 53, 69, 0.35);
-  border-radius: 6px;
+  font-weight: 500;
+  color: var(--danger);
+  background: var(--danger-muted);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
 }
 
+/* Sections */
 .preferences-section {
-  margin-bottom: 1.25rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .preferences-section:last-of-type {
-  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.preferences-section:first-of-type {
+  padding-top: 0;
 }
 
 .preferences-section-title {
-  margin: 0 0 0.75rem;
-  font-size: 0.8125rem;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  color: var(--text);
 }
 
+/* Fields */
 .preferences-field {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .preferences-field:last-child {
@@ -98,7 +107,7 @@
 
 .preferences-field label {
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.4rem;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text);
@@ -108,48 +117,52 @@
 .preferences-field input {
   display: block;
   width: 100%;
-  margin-bottom: 0.25rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--text);
   font-size: 0.9375rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .preferences-field select:focus,
 .preferences-field input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+  box-shadow: 0 0 0 3px var(--accent-muted);
 }
 
 .preferences-hint {
   display: block;
-  font-size: 0.75rem;
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
   color: var(--text-muted);
+  line-height: 1.4;
 }
 
+/* Actions */
 .preferences-actions {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid var(--border);
 }
 
 .preferences-submit {
-  padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
   color: #fff;
   background: var(--accent);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
+  transition: background var(--transition), box-shadow var(--transition), background-color var(--transition);
 }
 
 .preferences-submit:hover:not(:disabled) {
-  opacity: 0.92;
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .preferences-submit:disabled {
@@ -157,7 +170,25 @@
   cursor: not-allowed;
 }
 
-.preferences-submit:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+.preferences-submit.saved {
+  background: var(--success);
+}
+
+.preferences-submit.saved:hover {
+  background: var(--success);
+}
+
+.preferences-submit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .preferences-form {
+    padding: 1.25rem 1.25rem;
+  }
+
+  .preferences-section {
+    padding: 1rem 0;
+  }
 }

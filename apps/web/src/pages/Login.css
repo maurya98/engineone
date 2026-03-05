@@ -1,80 +1,378 @@
 .login-page {
+  position: relative;
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  flex-direction: row;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.login-scene-wrap {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.login-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.login-panel {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  padding: 1rem;
+  padding: 2.5rem 2rem;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+}
+
+[data-theme='dark'] .login-panel {
+  background: #111318;
+  border-left-color: rgba(42, 49, 66, 0.6);
+}
+
+[data-theme='light'] .login-panel {
+  background: #fafaf9;
+  border-left-color: rgba(0, 0, 0, 0.06);
+}
+
+.login-content {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  background: var(--bg-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+[data-theme='dark'] .login-card,
+[data-theme='light'] .login-card {
+  background: transparent;
+  border: none;
+}
+
+.login-brand {
+  text-align: left;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.login-logo {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.login-tagline {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.login-card-inner {
+  margin: 0;
+}
+
+.login-heading {
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: -0.01em;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.login-form label:last-of-type {
+  margin-bottom: 0.25rem;
+}
+
+.login-label-text {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.login-form input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9375rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.login-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.login-form input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.625rem 1rem;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.login-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 2px 8px var(--accent-muted);
+}
+
+.login-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-submit-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.login-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: login-spin 0.65s linear infinite;
+}
+
+@keyframes login-spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-error {
+  background: var(--danger-muted);
+  color: var(--danger);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.login-register {
+  margin: 1.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.login-register a {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.login-register a:hover {
+  color: var(--accent-hover);
+}
+
+.login-footer {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  text-align: left;
+  max-width: 100%;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+@media (max-width: 900px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-scene-wrap {
+    height: 35vh;
+    min-height: 200px;
+  }
+
+  .login-panel {
+    max-width: none;
+    flex: 1;
+    padding: 2rem 1.5rem;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .login-content {
+    max-width: 440px;
+  }
+
+  .login-brand {
+    text-align: center;
+  }
+
+  .login-register {
+    text-align: center;
+  }
+
+  .login-footer {
+    text-align: center;
+  }
+}
+
+/* Register page: centered card when no scene (no .login-scene-wrap) */
+.login-page:not(:has(.login-scene-wrap)) {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+.login-page:not(:has(.login-scene-wrap)) .login-panel {
+  max-width: 50%;
+  min-height: auto;
+  border: none;
   padding: 2rem;
 }
 
-.login-card h1 {
+.login-page:not(:has(.login-scene-wrap)) .login-content {
+  max-width: 50%;
+}
+
+.login-page:not(:has(.login-scene-wrap)) .login-brand {
+  text-align: center;
+}
+
+.login-page:not(:has(.login-scene-wrap)) .login-footer {
+  text-align: center;
+  max-width: 360px;
+}
+
+/* Register page uses same .login-page but without .login-scene-wrap;
+   it only has .login-card as direct child - see Register.tsx */
+.login-page:not(:has(.login-scene-wrap)) > .login-card {
+  max-width: 50%;
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2rem 2.25rem;
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme='dark'] .login-page:not(:has(.login-scene-wrap)) > .login-card {
+  background: rgba(21, 25, 34, 0.95);
+  border-color: rgba(42, 49, 66, 0.8);
+}
+
+[data-theme='light'] .login-page:not(:has(.login-scene-wrap)) > .login-card {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(228, 226, 222, 0.9);
+}
+
+.login-page:not(:has(.login-scene-wrap)) .login-subtitle {
+  text-align: center;
+}
+
+/* Shared form styles for Register (form without .login-form class) */
+.login-card > h1 {
   margin: 0 0 0.25rem;
   font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
 }
 
 .login-subtitle {
   color: var(--text-muted);
   margin: 0 0 1.5rem;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
 }
 
-.login-card form label {
-  display: block;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
+.login-card form:not(.login-form) label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
 }
 
-.login-card form input {
-  display: block;
-  width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
+.login-card form:not(.login-form) label .login-label-text,
+.login-card form:not(.login-form) label {
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--text);
 }
 
-.login-card form button {
+.login-card form:not(.login-form) input {
+  width: 100%;
+  padding: 0.6rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9375rem;
+  margin-top: 0.35rem;
+}
+
+.login-card form:not(.login-form) input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.login-card form:not(.login-form) button[type='submit'] {
   width: 100%;
   margin-top: 0.5rem;
-  padding: 0.6rem;
+  padding: 0.7rem 1rem;
   background: var(--accent);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   color: #fff;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.9375rem;
 }
 
-.login-card form button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.login-error {
-  background: rgba(248, 81, 73, 0.15);
-  color: #f85149;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-}
-
-.login-register {
-  margin-top: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.login-register a {
-  color: var(--accent);
+.login-card form:not(.login-form) button[type='submit']:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-sm);
 }
