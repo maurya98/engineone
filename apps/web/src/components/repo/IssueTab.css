@@ -1,0 +1,278 @@
+.issue-tab {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.issue-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.issue-filters {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.issue-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  min-width: 120px;
+}
+
+.issue-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.issue-btn-primary {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.issue-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.issue-btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.issue-btn-secondary {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.issue-btn-secondary:hover {
+  background: var(--bg);
+}
+
+.issue-btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.issue-btn-icon:hover {
+  color: var(--text);
+}
+
+.issue-loading {
+  color: var(--text-muted);
+  padding: 2rem;
+}
+
+.issue-list-layout {
+  display: flex;
+  gap: 1.5rem;
+  min-height: 0;
+  flex: 1;
+}
+
+.issue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+}
+
+.issue-empty {
+  padding: 2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.issue-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.issue-list-item:last-child {
+  border-bottom: none;
+}
+
+.issue-list-item:hover {
+  background: var(--bg);
+}
+
+.issue-list-item.selected {
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  padding-left: calc(1rem - 3px);
+}
+
+.issue-item-status {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.issue-item-status[data-status='open'] {
+  background: rgba(56, 139, 253, 0.2);
+  color: var(--accent);
+}
+
+.issue-item-status[data-status='resolved'] {
+  background: rgba(35, 134, 54, 0.2);
+  color: #2da44e;
+}
+
+.issue-item-status[data-status='closed'] {
+  background: var(--bg);
+  color: var(--text-muted);
+}
+
+.issue-item-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.issue-item-title {
+  display: block;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.issue-item-meta {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.issue-detail-panel {
+  width: 100%;
+  max-width: 1000px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  padding: 1rem;
+  overflow: auto;
+}
+
+.issue-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.issue-detail-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.issue-detail-form label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  margin-top: 0.75rem;
+}
+
+.issue-detail-form label:first-of-type {
+  margin-top: 0;
+}
+
+.issue-input,
+.issue-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  margin-bottom: 0;
+}
+
+.issue-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.issue-input:focus,
+.issue-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.issue-detail-meta {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+}
+
+.issue-error {
+  color: #f85149;
+  font-size: 0.875rem;
+  margin: 0.75rem 0 0;
+}
+
+.issue-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.modal-form-select {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.modal-form-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  margin-bottom: 1rem;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.modal-form-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
