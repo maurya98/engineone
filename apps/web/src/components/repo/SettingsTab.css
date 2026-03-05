@@ -1,0 +1,216 @@
+.settings-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 560px;
+}
+
+.settings-loading {
+  color: var(--text-muted);
+  padding: 2rem;
+}
+
+.settings-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  padding: 1.25rem 1.5rem;
+}
+
+.settings-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-muted {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
+}
+
+.settings-form label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.settings-input,
+.settings-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.settings-input:focus,
+.settings-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-select {
+  cursor: pointer;
+  min-width: 0;
+}
+
+.settings-error {
+  color: #f85149;
+  font-size: 0.875rem;
+  margin: -0.5rem 0 0.75rem;
+}
+
+.settings-actions {
+  margin-top: 0.5rem;
+}
+
+.settings-btn-primary {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.settings-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.settings-btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.settings-readonly p {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.settings-readonly .settings-muted {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.settings-members-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.settings-empty {
+  padding: 1rem 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.settings-member-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-member-row:last-child {
+  border-bottom: none;
+}
+
+.settings-member-email {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+.settings-member-role {
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.settings-btn-remove {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.settings-btn-remove:hover:not(:disabled) {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.settings-btn-remove:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.settings-add-member {
+  margin-top: 0.5rem;
+}
+
+.settings-add-member-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.settings-add-member-row .settings-input {
+  flex: 1;
+  min-width: 180px;
+  margin-bottom: 0;
+}
+
+.settings-add-member-row .settings-select {
+  width: auto;
+  min-width: 120px;
+  margin-bottom: 0;
+}
+
+.settings-add-member .settings-error {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.settings-danger {
+  border-color: rgba(248, 81, 73, 0.3);
+  background: rgba(248, 81, 73, 0.05);
+}
+
+.settings-btn-danger {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  background: #f85149;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.settings-btn-danger:hover {
+  filter: brightness(1.1);
+}
+
+.settings-delete-warning {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: var(--text);
+}

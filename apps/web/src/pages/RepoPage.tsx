@@ -6,6 +6,7 @@ import IssueTab from '../components/repo/IssueTab';
 import WikiTab from '../components/repo/WikiTab';
 import BranchTab from '../components/repo/BranchTab';
 import PullRequestTab from '../components/repo/PullRequestTab';
+import SettingsTab from '../components/repo/SettingsTab';
 import './RepoPage.css';
 
 const TABS = [
@@ -27,6 +28,10 @@ export default function RepoPage() {
       .then((data) => setRepo(data.repository))
       .catch(() => setRepo(null));
   }, [repoId]);
+
+  const handleRepoUpdate = (updated: { name: string; default_branch_name: string }) => {
+    setRepo((prev) => (prev ? { ...prev, ...updated } : null));
+  };
 
   const base = `/workspaces/${workspaceId}/repos/${repoId}`;
 
@@ -54,7 +59,7 @@ export default function RepoPage() {
               <Route path="branches" element={<BranchTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
               <Route path="pull_requests" element={<PullRequestTab repoId={repoId!} defaultBranch={repo.default_branch_name} />} />
               <Route path="wiki" element={<WikiTab repoId={repoId!} />} />
-              <Route path="settings" element={<div className="placeholder">Settings</div>} />
+              <Route path="settings" element={<SettingsTab repoId={repoId!} repo={repo} onRepoUpdate={handleRepoUpdate} />} />
             </Routes>
           </div>
         </>
